@@ -1,0 +1,19 @@
+{
+  "name": "celo-engage-hub",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@celo/contractkit": "^4.0.4",
+    "@walletconnect/web3-provider": "^1.8.0",
+    "ethers": "^5.7.2",
+    "web3": "^4.0.3"
+  },
+  "devDependencies": {
+    "vite": "^4.4.5"
+  }
+}
