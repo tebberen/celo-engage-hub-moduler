@@ -1,5 +1,8 @@
-import { ethers } from 'ethers';
-import EthereumProvider from "@walletconnect/ethereum-provider";
+// ✅ TARAYICI (CDN) UYUMLU SÜRÜM
+// Artık import kullanmıyoruz çünkü ethers.js ve WalletConnect UMD olarak <head>’de yüklendi.
+const { ethers } = window;
+const EthereumProvider = window.EthereumProvider || window.WalletConnectEthereumProvider;
+
 import { CELO_MAINNET_PARAMS } from '../utils/constants.js';
 
 export class WalletService {
@@ -15,20 +18,25 @@ export class WalletService {
   // ✅ MetaMask bağlantısı
   async connectMetaMask() {
     if (!this.checkMetaMask()) {
-      alert("MetaMask bulunamadı. Lütfen yükleyin.");
+      alert("🦊 MetaMask bulunamadı. Lütfen yükleyin.");
       return false;
     }
+
     try {
       this.provider = new ethers.providers.Web3Provider(window.ethereum);
       await this.switchToCeloNetwork();
       await window.ethereum.request({ method: 'eth_requestAccounts' });
+
       this.signer = this.provider.getSigner();
       this.userAddress = await this.signer.getAddress();
       this.isConnected = true;
+
       await this.checkCurrentNetwork();
+      console.log("✅ MetaMask bağlantısı başarılı:", this.userAddress);
       return true;
     } catch (err) {
-      console.error("MetaMask connection error:", err);
+      console.error("❌ MetaMask connection error:", err);
+      alert("MetaMask bağlantısı başarısız. Lütfen tekrar deneyin.");
       return false;
     }
   }
@@ -36,10 +44,15 @@ export class WalletService {
   // ✅ WalletConnect v2 bağlantısı
   async connectWalletConnect() {
     try {
+      if (!EthereumProvider) {
+        alert("WalletConnect provider yüklenemedi. Lütfen sayfayı yenileyin.");
+        return false;
+      }
+
       this.wcProvider = await EthereumProvider.init({
-        projectId: "8b020ffbb31e5aba14160c27ca26540b",
-        chains: [42220],
-        optionalChains: [44787],
+        projectId: "8b020ffbb31e5aba14160c27ca26540b", // Senin Project ID
+        chains: [42220], // Celo Mainnet
+        optionalChains: [44787], // Alfajores Testnet
         showQrModal: true,
         methods: [
           "eth_sendTransaction",
@@ -51,6 +64,7 @@ export class WalletService {
       });
 
       await this.wcProvider.connect();
+
       this.provider = new ethers.providers.Web3Provider(this.wcProvider);
       this.signer = this.provider.getSigner();
       this.userAddress = await this.signer.getAddress();
@@ -62,10 +76,12 @@ export class WalletService {
       this.wcProvider.on("disconnect", this.handleDisconnect.bind(this));
 
       await this.checkCurrentNetwork();
+
+      console.log("✅ WalletConnect bağlantısı başarılı:", this.userAddress);
       return true;
     } catch (err) {
-      console.error("WalletConnect v2 connection error:", err);
-      alert("WalletConnect bağlantısı başarısız: " + err.message);
+      console.error("❌ WalletConnect v2 connection error:", err);
+      alert("WalletConnect bağlantısı başarısız: " + (err.message || err));
       return false;
     }
   }
@@ -87,11 +103,11 @@ export class WalletService {
           });
           return true;
         } catch (addError) {
-          console.error("Celo ağı eklenemedi:", addError);
+          console.error("⚠️ Celo ağı eklenemedi:", addError);
           return false;
         }
       }
-      console.error("Ağ değiştirme hatası:", switchError);
+      console.error("⚠️ Ağ değiştirme hatası:", switchError);
       return false;
     }
   }
@@ -104,7 +120,7 @@ export class WalletService {
       this.currentChainId = network.chainId.toString();
       return this.currentChainId === "42220" || this.currentChainId === "44787";
     } catch (err) {
-      console.error("Network kontrol hatası:", err);
+      console.error("⚠️ Network kontrol hatası:", err);
       return false;
     }
   }
@@ -112,9 +128,7 @@ export class WalletService {
   // ✅ Bağlantıyı kes
   async disconnect() {
     try {
-      if (this.wcProvider) {
-        await this.wcProvider.disconnect();
-      }
+      if (this.wcProvider) await this.wcProvider.disconnect();
     } catch (err) {
       console.error("Disconnect error:", err);
     } finally {
@@ -149,21 +163,10 @@ export class WalletService {
   }
 
   // ✅ Getter fonksiyonları
-  getProvider() {
-    return this.provider;
-  }
-
-  getSigner() {
-    return this.signer;
-  }
-
-  getUserAddress() {
-    return this.userAddress;
-  }
-
-  getIsConnected() {
-    return this.isConnected;
-  }
+  getProvider() { return this.provider; }
+  getSigner() { return this.signer; }
+  getUserAddress() { return this.userAddress; }
+  getIsConnected() { return this.isConnected; }
 
   getShortAddress() {
     if (!this.userAddress) return '';
