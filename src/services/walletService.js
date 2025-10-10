@@ -1,184 +1,178 @@
 import { ethers } from 'ethers';
-import WalletConnectProvider from '@walletconnect/web3-provider';
-import { CELO_MAINNET_PARAMS, CELO_ALFAJORES_PARAMS } from '../utils/constants.js';
+import EthereumProvider from "@walletconnect/ethereum-provider";
+import { CELO_MAINNET_PARAMS } from '../utils/constants.js';
 
 export class WalletService {
-    constructor() {
-        this.provider = null;
-        this.signer = null;
-        this.userAddress = '';
-        this.isConnected = false;
-        this.walletConnectProvider = null;
-        this.currentChainId = null;
-    }
+  constructor() {
+    this.provider = null;
+    this.signer = null;
+    this.userAddress = '';
+    this.isConnected = false;
+    this.wcProvider = null;
+    this.currentChainId = null;
+  }
 
-    // MetaMask bağlantısı
-    async connectMetaMask() {
-        if (!this.checkMetaMask()) return false;
-        
+  // ✅ MetaMask bağlantısı
+  async connectMetaMask() {
+    if (!this.checkMetaMask()) {
+      alert("MetaMask bulunamadı. Lütfen yükleyin.");
+      return false;
+    }
+    try {
+      this.provider = new ethers.providers.Web3Provider(window.ethereum);
+      await this.switchToCeloNetwork();
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      this.signer = this.provider.getSigner();
+      this.userAddress = await this.signer.getAddress();
+      this.isConnected = true;
+      await this.checkCurrentNetwork();
+      return true;
+    } catch (err) {
+      console.error("MetaMask connection error:", err);
+      return false;
+    }
+  }
+
+  // ✅ WalletConnect v2 bağlantısı
+  async connectWalletConnect() {
+    try {
+      this.wcProvider = await EthereumProvider.init({
+        projectId: "8b020ffbb31e5aba14160c27ca26540b",
+        chains: [42220],
+        optionalChains: [44787],
+        showQrModal: true,
+        methods: [
+          "eth_sendTransaction",
+          "personal_sign",
+          "eth_signTransaction",
+          "eth_signTypedData"
+        ],
+        events: ["chainChanged", "accountsChanged", "disconnect"]
+      });
+
+      await this.wcProvider.connect();
+      this.provider = new ethers.providers.Web3Provider(this.wcProvider);
+      this.signer = this.provider.getSigner();
+      this.userAddress = await this.signer.getAddress();
+      this.isConnected = true;
+
+      // Event listeners
+      this.wcProvider.on("accountsChanged", this.handleAccountsChanged.bind(this));
+      this.wcProvider.on("chainChanged", this.handleChainChanged.bind(this));
+      this.wcProvider.on("disconnect", this.handleDisconnect.bind(this));
+
+      await this.checkCurrentNetwork();
+      return true;
+    } catch (err) {
+      console.error("WalletConnect v2 connection error:", err);
+      alert("WalletConnect bağlantısı başarısız: " + err.message);
+      return false;
+    }
+  }
+
+  // ✅ Celo ağına geçiş
+  async switchToCeloNetwork() {
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: CELO_MAINNET_PARAMS.chainId }],
+      });
+      return true;
+    } catch (switchError) {
+      if (switchError.code === 4902) {
         try {
-            this.provider = new ethers.providers.Web3Provider(window.ethereum);
-            await this.switchToCeloNetwork();
-            await window.ethereum.request({ method: 'eth_requestAccounts' });
-            this.signer = this.provider.getSigner();
-            this.userAddress = await this.signer.getAddress();
-            this.isConnected = true;
-            
-            await this.checkCurrentNetwork();
-            return true;
-        } catch (error) {
-            console.error("MetaMask connection error:", error);
-            return false;
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [CELO_MAINNET_PARAMS],
+          });
+          return true;
+        } catch (addError) {
+          console.error("Celo ağı eklenemedi:", addError);
+          return false;
         }
+      }
+      console.error("Ağ değiştirme hatası:", switchError);
+      return false;
     }
+  }
 
-    // WalletConnect bağlantısı
-    async connectWalletConnect() {
-        try {
-            const projectId = "8b020ffbb31e5aba14160c27ca26540b";
-            
-            this.walletConnectProvider = new WalletConnectProvider({
-                rpc: {
-                    42220: "https://forno.celo.org",
-                    44787: "https://alfajores-forno.celo-testnet.org"
-                },
-                chainId: 42220,
-                qrcodeModalOptions: {
-                    mobileLinks: [
-                        "metamask",
-                        "trust",
-                        "rainbow",
-                        "argent",
-                        "imtoken",
-                        "pillar"
-                    ]
-                }
-            });
-
-            await this.walletConnectProvider.enable();
-            this.provider = new ethers.providers.Web3Provider(this.walletConnectProvider);
-            this.signer = this.provider.getSigner();
-            this.userAddress = await this.signer.getAddress();
-            this.isConnected = true;
-
-            await this.checkCurrentNetwork();
-
-            // Event listeners for WalletConnect
-            this.walletConnectProvider.on("accountsChanged", this.handleAccountsChanged.bind(this));
-            this.walletConnectProvider.on("chainChanged", this.handleChainChanged.bind(this));
-            this.walletConnectProvider.on("disconnect", this.handleDisconnect.bind(this));
-
-            return true;
-        } catch (error) {
-            console.error("WalletConnect connection error:", error);
-            return false;
-        }
+  // ✅ Mevcut ağı kontrol et
+  async checkCurrentNetwork() {
+    if (!this.provider) return false;
+    try {
+      const network = await this.provider.getNetwork();
+      this.currentChainId = network.chainId.toString();
+      return this.currentChainId === "42220" || this.currentChainId === "44787";
+    } catch (err) {
+      console.error("Network kontrol hatası:", err);
+      return false;
     }
+  }
 
-    // Ağ değiştirme
-    async switchToCeloNetwork() {
-        try {
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: CELO_MAINNET_PARAMS.chainId }],
-            });
-            return true;
-        } catch (switchError) {
-            if (switchError.code === 4902) {
-                try {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [CELO_MAINNET_PARAMS],
-                    });
-                    return true;
-                } catch (addError) {
-                    console.error("Error adding Celo network:", addError);
-                    return false;
-                }
-            }
-            console.error("Error switching to Celo:", switchError);
-            return false;
-        }
+  // ✅ Bağlantıyı kes
+  async disconnect() {
+    try {
+      if (this.wcProvider) {
+        await this.wcProvider.disconnect();
+      }
+    } catch (err) {
+      console.error("Disconnect error:", err);
+    } finally {
+      this.provider = null;
+      this.signer = null;
+      this.userAddress = '';
+      this.isConnected = false;
+      this.wcProvider = null;
     }
+  }
 
-    // Mevcut ağı kontrol et
-    async checkCurrentNetwork() {
-        if (!this.provider) return false;
-        
-        try {
-            const network = await this.provider.getNetwork();
-            this.currentChainId = network.chainId.toString();
-            return (this.currentChainId === "42220" || this.currentChainId === "44787");
-        } catch (error) {
-            console.error("Error checking network:", error);
-            return false;
-        }
-    }
+  // ✅ MetaMask kontrolü
+  checkMetaMask() {
+    return typeof window.ethereum !== 'undefined';
+  }
 
-    // Bağlantıyı kes
-    async disconnect() {
-        try {
-            if (this.walletConnectProvider) {
-                await this.walletConnectProvider.disconnect();
-            }
-        } catch (error) {
-            console.error("Error disconnecting:", error);
-        } finally {
-            this.provider = null;
-            this.signer = null;
-            this.userAddress = '';
-            this.isConnected = false;
-            this.walletConnectProvider = null;
-        }
+  // ✅ Event handlers
+  handleAccountsChanged(accounts) {
+    if (!accounts || accounts.length === 0) {
+      this.disconnect();
+    } else {
+      window.location.reload();
     }
+  }
 
-    // MetaMask kontrolü
-    checkMetaMask() {
-        return typeof window.ethereum !== 'undefined';
-    }
+  handleChainChanged() {
+    window.location.reload();
+  }
 
-    // Event handlers
-    handleAccountsChanged(accounts) {
-        if (!accounts || accounts.length === 0) {
-            this.disconnect();
-        } else {
-            window.location.reload();
-        }
-    }
+  handleDisconnect() {
+    this.disconnect();
+  }
 
-    handleChainChanged(chainId) {
-        window.location.reload();
-    }
+  // ✅ Getter fonksiyonları
+  getProvider() {
+    return this.provider;
+  }
 
-    handleDisconnect() {
-        this.disconnect();
-    }
+  getSigner() {
+    return this.signer;
+  }
 
-    // Getter methods
-    getProvider() {
-        return this.provider;
-    }
+  getUserAddress() {
+    return this.userAddress;
+  }
 
-    getSigner() {
-        return this.signer;
-    }
+  getIsConnected() {
+    return this.isConnected;
+  }
 
-    getUserAddress() {
-        return this.userAddress;
-    }
+  getShortAddress() {
+    if (!this.userAddress) return '';
+    return `${this.userAddress.substring(0, 6)}...${this.userAddress.slice(-4)}`;
+  }
 
-    getIsConnected() {
-        return this.isConnected;
-    }
-
-    getShortAddress() {
-        if (!this.userAddress) return '';
-        return `${this.userAddress.substring(0, 6)}...${this.userAddress.substring(this.userAddress.length - 4)}`;
-    }
-
-    getNetworkInfo() {
-        if (this.currentChainId === "42220") return { name: "Celo Mainnet", color: "#35D07F" };
-        if (this.currentChainId === "44787") return { name: "Celo Alfajores", color: "#35D07F" };
-        return { name: "Wrong Network", color: "#EF4444" };
-    }
+  getNetworkInfo() {
+    if (this.currentChainId === "42220") return { name: "Celo Mainnet", color: "#35D07F" };
+    if (this.currentChainId === "44787") return { name: "Celo Alfajores", color: "#35D07F" };
+    return { name: "Wrong Network", color: "#EF4444" };
+  }
 }
