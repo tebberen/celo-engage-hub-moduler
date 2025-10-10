@@ -1,4 +1,4 @@
-// ✅ TARAYICI (CDN) UYUMLU SÜRÜM
+// ✅ TARAYICI UYUMLU SÜRÜM (GitHub Pages için)
 // Artık import kullanmıyoruz çünkü ethers.js ve WalletConnect UMD olarak <head>’de yüklendi.
 const { ethers } = window;
 const EthereumProvider = window.EthereumProvider || window.WalletConnectEthereumProvider;
@@ -18,7 +18,7 @@ export class WalletService {
   // ✅ MetaMask bağlantısı
   async connectMetaMask() {
     if (!this.checkMetaMask()) {
-      alert("🦊 MetaMask bulunamadı. Lütfen yükleyin.");
+      alert("🦊 MetaMask bulunamadı. Lütfen eklentiyi yükleyin veya etkinleştirin.");
       return false;
     }
 
@@ -50,7 +50,7 @@ export class WalletService {
       }
 
       this.wcProvider = await EthereumProvider.init({
-        projectId: "8b020ffbb31e5aba14160c27ca26540b", // Senin Project ID
+        projectId: "8b020ffbb31e5aba14160c27ca26540b", // senin projectId
         chains: [42220], // Celo Mainnet
         optionalChains: [44787], // Alfajores Testnet
         showQrModal: true,
@@ -76,11 +76,10 @@ export class WalletService {
       this.wcProvider.on("disconnect", this.handleDisconnect.bind(this));
 
       await this.checkCurrentNetwork();
-
       console.log("✅ WalletConnect bağlantısı başarılı:", this.userAddress);
       return true;
     } catch (err) {
-      console.error("❌ WalletConnect v2 connection error:", err);
+      console.error("❌ WalletConnect connection error:", err);
       alert("WalletConnect bağlantısı başarısız: " + (err.message || err));
       return false;
     }
