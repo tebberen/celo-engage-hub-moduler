@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Celo Engage Hub</title>
 
-  <!-- ✅ CSS dosyan -->
+  <!-- ✅ CSS -->
   <link rel="stylesheet" href="./src/styles/main.css">
 
-  <!-- ✅ Ethers.js CDN (import hatasını çözer) -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <!-- ✅ Ethers.js (önce yüklenir) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" defer></script>
 
-  <!-- ✅ WalletConnect CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2/dist/index.umd.min.js"></script>
+  <!-- ✅ WalletConnect Ethereum Provider (en stabil sürüm, defer eklendi) -->
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.10.6/dist/umd/index.min.js" defer></script>
 </head>
 
 <body>
@@ -100,7 +100,7 @@
     </div>
   </div>
 
-  <!-- ✅ JS dosyan -->
+  <!-- ✅ JS -->
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>
