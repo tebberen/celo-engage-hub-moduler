@@ -1,14 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Celo Engage Hub</title>
-
-  <!-- ✅ CSS bağlantısı -->
-<link rel="stylesheet" href="main.css" />
-  <!-- ✅ Ethers.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    .top-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+    .top-buttons button {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .gm-btn { background: linear-gradient(135deg, #ffcc00, #ff9900); }
+    .deploy-btn { background: linear-gradient(135deg, #00b37a, #00935c); }
+    .gov-btn { background: linear-gradient(135deg, #4b6cb7, #182848); }
+    .top-buttons button:hover { transform: scale(1.05); opacity: 0.9; }
+    .hidden { display: none !important; }
+  </style>
 </head>
 
 <body>
@@ -16,30 +37,25 @@
     <header>
       <div>🌐 Celo Engage Hub</div>
     </header>
-
     <div class="slogan">Social TX - Where Every Interaction Builds Real Value</div>
 
-    <!-- 🌞 GM / 🚀 Deploy / 🏛️ Governance Buttons -->
+    <!-- 🌞 🚀 🏛️ BUTONLAR -->
     <div class="top-buttons">
-      <button class="gm-btn">🌞 GM</button>
-      <button class="deploy-btn">🚀 Deploy</button>
-      <button class="gov-btn">🏛️ Governance</button>
+      <button class="gm-btn" onclick="alert('🌞 GM! Have a great day builder!')">🌞 GM</button>
+      <button class="deploy-btn" onclick="alert('🚀 Deploy function coming soon!')">🚀 Deploy</button>
+      <button class="gov-btn" id="govBtn">🏛️ Governance</button>
     </div>
 
     <div class="subheader">If you want support, support first</div>
-
     <button id="connectWalletBtn" class="connect-btn">🔗 Connect Wallet</button>
   </div>
 
-  <!-- ✅ Sidebar & Main Layout -->
   <div class="container">
     <div class="sidebar">
       <div id="walletInfo" class="wallet-address hidden">
         ✅ Connected: <span id="walletAddress"></span>
-        <div id="networkInfo" style="font-size: 12px; margin-top: 5px;"></div>
       </div>
 
-      <!-- 🟡 Celo Ecosystem -->
       <div class="celo-ecosystem">
         <h3>🟡 Celo Ecosystem</h3>
         <a href="https://celo.org" target="_blank" class="celo-link">🌐 Celo Official</a>
@@ -55,7 +71,7 @@
     </div>
 
     <div class="main-content">
-      <div id="step1" class="support-section">
+      <div id="supportSection">
         <div class="step-indicator">
           <span class="step-number">1</span> Support Community Members
         </div>
@@ -66,7 +82,7 @@
         </div>
       </div>
 
-      <div id="governanceSection" class="governance-section hidden">
+      <div id="governanceSection" class="hidden">
         <div class="step-indicator">
           <span class="step-number">🏛️</span> Community Governance
         </div>
@@ -83,7 +99,21 @@
     </div>
   </div>
 
-  <!-- ✅ JS -->
-  <script type="module" src="./src/app.js"></script>
+  <script type="module" src="./app.js"></script>
+  <script>
+    // 🏛️ Governance Butonu Tıklama
+    document.getElementById('govBtn').addEventListener('click', () => {
+      const gov = document.getElementById('governanceSection');
+      const sup = document.getElementById('supportSection');
+      if (gov.classList.contains('hidden')) {
+        gov.classList.remove('hidden');
+        sup.classList.add('hidden');
+        gov.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        gov.classList.add('hidden');
+        sup.classList.remove('hidden');
+      }
+    });
+  </script>
 </body>
 </html>
