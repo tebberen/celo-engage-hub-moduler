@@ -1,165 +1,133 @@
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../utils/constants.js";
+import { ethers } from "ethers";
+import { provider, signer, CONTRACT_ADDRESS, CONTRACT_ABI } from "./walletService.js";
 
-// Kontrat nesnesi oluştur
-function getContract(providerOrSigner) {
-  return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, providerOrSigner);
-}
-
-// 🔹 Kullanıcı profilini yükle
+// 🧩 Kullanıcı profilini yükleme
 export async function loadUserProfile(provider, signer, userAddress) {
   try {
-    const contract = getContract(provider);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
     const profile = await contract.getUserProfile(userAddress);
 
     const userProfile = {
       username: profile[0],
-      supportCount: profile[1].toString(),
-      reputation: profile[2].toString(),
-      badgeCount: profile[3].toString(),
+      supportCount: profile[1],
+      reputation: profile[2],
+      badgeCount: profile[3],
       isActive: profile[4],
-      timestamp: profile[5].toString()
+      timestamp: profile[5],
     };
 
-    console.log("✅ User profile loaded:", userProfile);
-
-    if (userProfile.isActive) {
-      document.getElementById('userProfileSection').classList.add('hidden');
-      document.getElementById('governanceSection').classList.remove('hidden');
-      document.getElementById('badgesSection').classList.remove('hidden');
-      loadUserBadges(provider, userAddress);
-      loadProposals(provider);
-    } else {
-      document.getElementById('userProfileSection').classList.remove('hidden');
-    }
+    console.log("✅ User Profile:", userProfile);
+    return userProfile;
   } catch (error) {
-    console.error("❌ Error loading profile:", error);
+    console.error("❌ Error loading user profile:", error);
   }
 }
 
-// 🔹 Kullanıcı profili oluştur / güncelle
-export async function setupUserProfile(provider, signer, userAddress) {
+// 🧱 Tüm proposalları (aktif + geçmiş) yükleme
+export async function loadProposals() {
   try {
-    const contract = getContract(provider);
-    const userProfile = await contract.getUserProfile(userAddress);
-    const username = document.getElementById("userUsername").value.trim();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const totalCount = await contract.proposalCount();
+    const container = document.getElementById("proposalsContainer");
+    container.innerHTML = "";
 
-    if (!username) {
-      alert("Please enter a username first!");
+    if (totalCount.toNumber() === 0) {
+      container.innerHTML = "<p>No proposals found yet.</p>";
       return;
     }
 
-    let tx;
-    if (userProfile.isActive) {
-      tx = await contract.connect(signer).updateProfile(username, { gasLimit: 300000 });
-      alert("🔄 Updating profile...");
-    } else {
-      tx = await contract.connect(signer).registerUser(username, { gasLimit: 500000 });
-      alert("🚀 Registering new profile...");
-    }
+    for (let i = totalCount.toNumber(); i >= 1; i--) {
+      try {
+        const details = await contract.getProposalDetails(i);
 
-    await tx.wait();
-    alert("✅ Profile setup complete!");
-    loadUserProfile(provider, signer, userAddress);
+        const proposalCard = document.createElement("div");
+        proposalCard.className = "proposal-card";
+
+        proposalCard.innerHTML = `
+          <h4>${details.title}</h4>
+          <p>${details.description}</p>
+          <div class="link-stats">
+            <div class="stat-item">
+              <div>👍 For</div>
+              <div class="stat-value">${details.votesFor.toString()}</div>
+            </div>
+            <div class="stat-item">
+              <div>👎 Against</div>
+              <div class="stat-value">${details.votesAgainst.toString()}</div>
+            </div>
+          </div>
+          <p><small>🧾 ID: ${details.id} | ${details.executed ? "✅ Executed" : "🕒 Pending"}</small></p>
+          <button class="vote-btn" onclick="voteProposal(${details.id}, true)">👍 Support</button>
+          <button class="vote-btn" onclick="voteProposal(${details.id}, false)">👎 Oppose</button>
+        `;
+
+        container.appendChild(proposalCard);
+      } catch (err) {
+        console.log(`Skipping proposal #${i} (possibly invalid)`);
+      }
+    }
   } catch (error) {
-    console.error("❌ Profile setup error:", error);
-    alert("Profile setup failed. Check console for details.");
+    console.error("Error loading proposals:", error);
   }
 }
 
-// 🔹 Proposal oluştur
-export async function createProposal(provider, signer) {
+// 🗳️ Yeni proposal oluşturma
+export async function createProposal(title, description) {
   try {
-    const title = document.getElementById("proposalTitle").value.trim();
-    const description = document.getElementById("proposalDescription").value.trim();
-
-    if (!title || !description) {
-      alert("Please enter both title and description");
-      return;
-    }
-
-    const contract = getContract(signer);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
     const duration = 3 * 24 * 60 * 60; // 3 gün
     const tx = await contract.createProposal(title, description, duration, { gasLimit: 600000 });
 
     console.log("🔄 Proposal TX sent:", tx.hash);
     await tx.wait();
-    alert("✅ Proposal created successfully!");
-    loadProposals(provider);
+    console.log("✅ Proposal created successfully!");
+    alert("🎉 Proposal created successfully!");
   } catch (error) {
     console.error("❌ Proposal creation error:", error);
-    alert("Failed to create proposal.");
+    alert("❌ Error creating proposal! Check console for details.");
   }
 }
 
-// 🔹 Oy verme
-export async function voteProposal(provider, signer, proposalId, support) {
+// 👍 / 👎 Oy verme
+export async function voteProposal(proposalId, support) {
   try {
-    const contract = getContract(signer);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
     const tx = await contract.voteProposal(proposalId, support, { gasLimit: 400000 });
+
+    console.log("🔄 Vote TX sent:", tx.hash);
     await tx.wait();
+    console.log("✅ Vote submitted successfully!");
     alert("✅ Vote submitted successfully!");
-    loadProposals(provider);
+    await loadProposals();
   } catch (error) {
     console.error("❌ Voting error:", error);
-    alert("Voting failed.");
+    alert("⚠️ Voting failed! See console for details.");
   }
 }
 
-// 🔹 Aktif Proposal'ları yükle
-export async function loadProposals(provider) {
+// 🎖️ Kullanıcı rozetlerini yükleme
+export async function loadUserBadges(userAddress) {
   try {
-    const contract = getContract(provider);
-    const activeProposals = await contract.getActiveProposals();
-    const container = document.getElementById('proposalsContainer');
-    container.innerHTML = '';
-
-    if (activeProposals.length === 0) {
-      container.innerHTML = '<p>No active proposals yet.</p>';
-      return;
-    }
-
-    for (let i = 0; i < activeProposals.length; i++) {
-      const proposalId = activeProposals[i];
-      const details = await contract.getProposalDetails(proposalId);
-
-      const card = document.createElement('div');
-      card.className = 'proposal-card';
-      card.innerHTML = `
-        <h4>${details.title}</h4>
-        <p>${details.description}</p>
-        <div class="link-stats">
-          <div class="stat-item"><div>👍 For</div><div class="stat-value">${details.votesFor.toString()}</div></div>
-          <div class="stat-item"><div>👎 Against</div><div class="stat-value">${details.votesAgainst.toString()}</div></div>
-        </div>
-        <button onclick="voteProposal(${proposalId}, true)">👍 Support</button>
-        <button onclick="voteProposal(${proposalId}, false)">👎 Oppose</button>`;
-      container.appendChild(card);
-    }
-  } catch (error) {
-    console.error("❌ Error loading proposals:", error);
-  }
-}
-
-// 🔹 Kullanıcı rozetlerini yükle
-export async function loadUserBadges(provider, userAddress) {
-  try {
-    const contract = getContract(provider);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
     const badges = await contract.getUserBadges(userAddress);
-    const container = document.getElementById('userBadgesContainer');
-    container.innerHTML = '';
+    const container = document.getElementById("userBadgesContainer");
+    container.innerHTML = "";
 
     if (badges.length === 0) {
-      container.innerHTML = '<p>No badges yet. Be active to earn badges!</p>';
+      container.innerHTML = "<p>No badges yet. Be active in the community to earn badges!</p>";
       return;
     }
 
-    badges.forEach(badge => {
-      const badgeCard = document.createElement('div');
-      badgeCard.className = 'badge-card';
-      badgeCard.innerHTML = `<strong>${badge}</strong><p>Earned through community participation</p>`;
+    badges.forEach((badge) => {
+      const badgeCard = document.createElement("div");
+      badgeCard.className = "badge-card";
+      badgeCard.innerHTML = `
+        <strong>${badge}</strong>
+        <p>Earned through community participation</p>
+      `;
       container.appendChild(badgeCard);
     });
   } catch (error) {
-    console.error("❌ Error loading badges:", error);
+    console.error("Error loading badges:", error);
   }
 }
