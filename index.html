@@ -87,6 +87,7 @@
           </div>
         </div>
 
+        <!-- 🏛️ Community Governance (Başta gizli) -->
         <div id="governanceSection" class="governance-section hidden">
           <div class="step-indicator">
             <span class="step-number">🏛️</span> Community Governance
@@ -110,10 +111,27 @@
   <!-- ✅ Buton Etkileşimleri -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      document.querySelector('.gm-btn').addEventListener('click', () => alert('🌞 GM Celo fam! Have a productive day!'));
-      document.querySelector('.deploy-btn').addEventListener('click', () => alert('🚀 Deploy feature coming soon...'));
-      document.querySelector('.gov-btn').addEventListener('click', () => {
-        document.getElementById('governanceSection').scrollIntoView({ behavior: 'smooth' });
+      // 🌞 GM
+      document.querySelector('.gm-btn').addEventListener('click', () => {
+        alert('🌞 GM Celo fam! Have a productive day!');
+      });
+
+      // 🚀 Deploy
+      document.querySelector('.deploy-btn').addEventListener('click', () => {
+        alert('🚀 Deploy feature coming soon...');
+      });
+
+      // 🏛️ Governance - Göster/Gizle
+      const govBtn = document.querySelector('.gov-btn');
+      const govSection = document.getElementById('governanceSection');
+      
+      govBtn.addEventListener('click', () => {
+        if (govSection.classList.contains('hidden')) {
+          govSection.classList.remove('hidden');
+          govSection.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          govSection.classList.add('hidden');
+        }
       });
     });
   </script>
