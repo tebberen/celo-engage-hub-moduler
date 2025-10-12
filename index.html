@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Celo Engage Hub</title>
-  <link rel="stylesheet" href="main.css">
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="src/styles/main.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 </head>
 
 <body>
@@ -14,13 +14,6 @@
       <div>🌐 Celo Engage Hub</div>
     </header>
     <div class="slogan">Social TX - Where Every Interaction Builds Real Value</div>
-
-    <div class="top-buttons">
-      <button class="gm-btn" onclick="alert('🌞 GM! Have a great day builder!')">🌞 GM</button>
-      <button class="deploy-btn" onclick="alert('🚀 Deploy function coming soon!')">🚀 Deploy</button>
-      <button class="gov-btn" id="govBtn">🏛️ Governance</button>
-    </div>
-
     <div class="subheader">If you want support, support first</div>
     <button id="connectWalletBtn" class="connect-btn">🔗 Connect Wallet</button>
   </div>
@@ -29,6 +22,8 @@
     <div class="sidebar">
       <div id="walletInfo" class="wallet-address hidden">
         ✅ Connected: <span id="walletAddress"></span>
+        <div id="networkInfo" style="font-size: 12px; margin-top: 5px;"></div>
+        <button id="disconnectWalletBtn" class="disconnect-btn">Disconnect</button>
       </div>
 
       <div class="celo-ecosystem">
@@ -43,37 +38,55 @@
         <a href="https://blog.celo.org" target="_blank" class="celo-link">📰 Blog</a>
         <a href="https://github.com/celo-org" target="_blank" class="celo-link">💻 GitHub</a>
       </div>
+
+      <div id="platformStats" class="stats-container hidden">
+        <div class="stat-card"><div>👥 Total Users</div><div class="stat-value" id="totalUsers">0</div></div>
+        <div class="stat-card"><div>📋 Proposals</div><div class="stat-value" id="totalProposals">0</div></div>
+        <div class="stat-card"><div>🎖️ Badges</div><div class="stat-value" id="totalBadges">0</div></div>
+        <div class="stat-card"><div>👍 Supports</div><div class="stat-value" id="totalSupports">0</div></div>
+      </div>
     </div>
 
     <div class="main-content">
-      <div id="supportSection">
-        <div class="step-indicator">
-          <span class="step-number">1</span> Support Community Members
+      <div class="content-layout">
+        <div id="step1" class="support-section">
+          <div class="step-indicator">
+            <span class="step-number">1</span> Support Community Members
+          </div>
+          <div class="step-container">
+            <h3>📋 Support Others First</h3>
+            <p>To submit your link, you must first support at least one community member</p>
+            <div class="links-grid" id="linksContainer"></div>
+          </div>
         </div>
-        <div class="step-container">
-          <h3>📋 Support Others First</h3>
-          <p>To submit your link, you must first support at least one community member</p>
-          <div class="links-grid" id="linksContainer"></div>
-        </div>
-      </div>
 
-      <div id="governanceSection" class="hidden">
-        <div class="step-indicator">
-          <span class="step-number">🏛️</span> Community Governance
+        <div id="governanceSection" class="governance-section hidden">
+          <div class="step-indicator">
+            <span class="step-number">🏛️</span> Community Governance
+          </div>
+          <div class="step-container">
+            <h3>🗳️ Create Proposal</h3>
+            <input type="text" placeholder="Proposal title..." id="proposalTitle" />
+            <textarea placeholder="Proposal description..." id="proposalDescription" rows="3"></textarea>
+            <button id="createProposalBtn">📝 Create Proposal</button>
+            <h3 style="margin-top: 30px;">📋 Active Proposals</h3>
+            <div id="proposalsContainer"></div>
+          </div>
         </div>
-        <div class="step-container">
-          <h3>🗳️ Create Proposal</h3>
-          <input type="text" placeholder="Proposal title..." id="proposalTitle" />
-          <textarea placeholder="Proposal description..." id="proposalDescription" rows="3"></textarea>
-          <button id="createProposalBtn">📝 Create Proposal</button>
 
-          <h3 style="margin-top: 30px;">📋 Active Proposals</h3>
-          <div id="proposalsContainer"></div>
+        <div id="badgesSection" class="badge-section hidden">
+          <div class="step-indicator">
+            <span class="step-number">🎖️</span> Your Badges
+          </div>
+          <div class="step-container">
+            <h3>🏆 Your Achievements</h3>
+            <div id="userBadgesContainer"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="src/app.js"></script>
 </body>
 </html>
