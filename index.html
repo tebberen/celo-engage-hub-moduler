@@ -41,19 +41,36 @@
     </div>
   </div>
 
-  <!-- ✅ Sayfa içeriği -->
+  <!-- ✅ Ana Container -->
   <div class="container">
+
+    <!-- ✅ Sol Panel (Celo Ecosystem geri geldi 🟡) -->
     <div class="sidebar">
-      <div id="walletInfo" class="wallet-address hidden">
+      <div class="celo-ecosystem">
+        <h3>🟡 Celo Ecosystem</h3>
+        <a href="https://celo.org" target="_blank" class="celo-link">🌐 Celo Official</a>
+        <a href="https://docs.celo.org" target="_blank" class="celo-link">📚 Documentation</a>
+        <a href="https://developers.celo.org" target="_blank" class="celo-link">💼 Developer Portal</a>
+        <a href="https://celoscan.io" target="_blank" class="celo-link">🔍 Explorer</a>
+        <a href="https://forum.celo.org" target="_blank" class="celo-link">💬 Forum</a>
+        <a href="https://x.com/Celo" target="_blank" class="celo-link">🐦 Twitter</a>
+        <a href="https://chat.celo.org" target="_blank" class="celo-link">💬 Discord</a>
+        <a href="https://blog.celo.org" target="_blank" class="celo-link">📰 Blog</a>
+        <a href="https://github.com/celo-org" target="_blank" class="celo-link">💻 GitHub</a>
+      </div>
+
+      <div id="walletInfo" class="wallet-address hidden" style="margin-top:20px;">
         ✅ Connected: <span id="walletAddress"></span>
         <div id="networkInfo" style="font-size: 12px; margin-top: 5px;"></div>
         <button id="disconnectWalletBtn" class="disconnect-btn">Disconnect</button>
       </div>
     </div>
 
+    <!-- ✅ Ana İçerik -->
     <div class="main-content">
       <div class="content-layout">
-        <!-- ✅ Support Section -->
+
+        <!-- ✅ Support Bölümü -->
         <div id="supportSection" class="support-section">
           <div class="step-indicator">
             <span class="step-number">1</span> Support Community Members
@@ -65,7 +82,7 @@
           </div>
         </div>
 
-        <!-- 🏛️ Governance (Başta gizli) -->
+        <!-- 🏛️ Governance Bölümü (Gizli başlar) -->
         <div id="governanceSection" class="governance-section hidden">
           <div class="step-indicator">
             <span class="step-number">🏛️</span> Community Governance
@@ -79,14 +96,15 @@
             <div id="proposalsContainer"></div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
 
-  <!-- ✅ JS -->
+  <!-- ✅ Ana Script -->
   <script type="module" src="./src/app.js"></script>
 
-  <!-- ✅ Buton etkileşimleri -->
+  <!-- ✅ Buton Etkileşimleri -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const govBtn = document.querySelector('.gov-btn');
@@ -103,17 +121,15 @@
         alert('🚀 Deployment feature coming soon!');
       });
 
-      // 🏛️ Governance görünüm geçişi
+      // 🏛️ Governance Toggle
       govBtn.addEventListener('click', () => {
         const showingGovernance = !govSection.classList.contains('hidden');
 
         if (showingGovernance) {
-          // Governance gizle, support geri gelsin
           govSection.classList.add('hidden');
           supportSection.classList.remove('hidden');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-          // Support gizle, governance göster
           supportSection.classList.add('hidden');
           govSection.classList.remove('hidden');
           govSection.scrollIntoView({ behavior: 'smooth' });
