@@ -4,11 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Celo Engage Hub</title>
-
-  <!-- ✅ CSS -->
   <link rel="stylesheet" href="./src/styles/main.css" />
-
-  <!-- ✅ Ethers -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 </head>
 
@@ -18,33 +14,20 @@
       <div>🌐 Celo Engage Hub</div>
     </header>
 
-    <!-- ✅ Slogan -->
     <div class="slogan">Social TX - Where Every Interaction Builds Real Value</div>
 
-    <!-- 🌞🚀🏛️ Üç buton -->
-    <div class="hero-buttons">
-      <button class="hero-btn gm-btn">🌞 GM</button>
-      <button class="hero-btn deploy-btn">🚀 Deploy</button>
-      <button class="hero-btn gov-btn">🏛️ Governance</button>
+    <!-- 🌞 GM / 🚀 Deploy / 🏛️ Governance Buttons -->
+    <div class="top-buttons">
+      <button class="gm-btn">🌞 GM</button>
+      <button class="deploy-btn">🚀 Deploy</button>
+      <button class="gov-btn">🏛️ Governance</button>
     </div>
 
     <div class="subheader">If you want support, support first</div>
     <button id="connectWalletBtn" class="connect-btn">🔗 Connect Wallet</button>
   </div>
 
-  <!-- ✅ Wallet Modal -->
-  <div id="walletModal" class="wallet-modal hidden">
-    <div class="wallet-modal-content">
-      <h3 style="margin-bottom: 25px;">Choose Wallet</h3>
-      <button class="wallet-option" id="modalMetaMaskBtn">🦊 MetaMask</button>
-      <button class="close-modal" id="closeWalletModalBtn">Cancel</button>
-    </div>
-  </div>
-
-  <!-- ✅ Ana Container -->
   <div class="container">
-
-    <!-- ✅ Sol Panel (Celo Ecosystem geri geldi 🟡) -->
     <div class="sidebar">
       <div class="celo-ecosystem">
         <h3>🟡 Celo Ecosystem</h3>
@@ -58,81 +41,60 @@
         <a href="https://blog.celo.org" target="_blank" class="celo-link">📰 Blog</a>
         <a href="https://github.com/celo-org" target="_blank" class="celo-link">💻 GitHub</a>
       </div>
-
-      <div id="walletInfo" class="wallet-address hidden" style="margin-top:20px;">
-        ✅ Connected: <span id="walletAddress"></span>
-        <div id="networkInfo" style="font-size: 12px; margin-top: 5px;"></div>
-        <button id="disconnectWalletBtn" class="disconnect-btn">Disconnect</button>
-      </div>
     </div>
 
-    <!-- ✅ Ana İçerik -->
     <div class="main-content">
-      <div class="content-layout">
-
-        <!-- ✅ Support Bölümü -->
-        <div id="supportSection" class="support-section">
-          <div class="step-indicator">
-            <span class="step-number">1</span> Support Community Members
-          </div>
-          <div class="step-container">
-            <h3>📋 Support Others First</h3>
-            <p>To submit your link, you must first support at least one community member</p>
-            <div class="links-grid" id="linksContainer"></div>
-          </div>
+      <!-- ✅ Support Section -->
+      <div id="step1" class="support-section">
+        <div class="step-indicator">
+          <span class="step-number">1</span> Support Community Members
         </div>
-
-        <!-- 🏛️ Governance Bölümü (Gizli başlar) -->
-        <div id="governanceSection" class="governance-section hidden">
-          <div class="step-indicator">
-            <span class="step-number">🏛️</span> Community Governance
-          </div>
-          <div class="step-container">
-            <h3>🗳️ Create Proposal</h3>
-            <input type="text" placeholder="Proposal title..." id="proposalTitle" />
-            <textarea placeholder="Proposal description..." id="proposalDescription" rows="3"></textarea>
-            <button id="createProposalBtn">📝 Create Proposal</button>
-            <h3 style="margin-top: 30px;">📋 Active Proposals</h3>
-            <div id="proposalsContainer"></div>
-          </div>
+        <div class="step-container">
+          <h3>📋 Support Others First</h3>
+          <p>To submit your link, you must first support at least one community member</p>
+          <div class="links-grid" id="linksContainer"></div>
         </div>
+      </div>
 
+      <!-- ✅ Governance Section -->
+      <div id="governanceSection" class="governance-section hidden">
+        <div class="step-indicator">
+          <span class="step-number">🏛️</span> Community Governance
+        </div>
+        <div class="step-container">
+          <h3>🗳️ Create Proposal</h3>
+          <input type="text" placeholder="Proposal title..." id="proposalTitle" />
+          <textarea placeholder="Proposal description..." id="proposalDescription" rows="3"></textarea>
+          <button id="createProposalBtn">📝 Create Proposal</button>
+          <h3 style="margin-top: 30px;">📋 Active Proposals</h3>
+          <div id="proposalsContainer"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ✅ Ana Script -->
   <script type="module" src="./src/app.js"></script>
 
-  <!-- ✅ Buton Etkileşimleri -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+      const gmBtn = document.querySelector('.gm-btn');
+      const deployBtn = document.querySelector('.deploy-btn');
       const govBtn = document.querySelector('.gov-btn');
-      const govSection = document.getElementById('governanceSection');
-      const supportSection = document.getElementById('supportSection');
+      const supportSection = document.getElementById('step1');
+      const governanceSection = document.getElementById('governanceSection');
 
-      // 🌞 GM
-      document.querySelector('.gm-btn').addEventListener('click', () => {
-        alert('🌞 GM! Have a great day, Celo builder!');
-      });
-
-      // 🚀 Deploy
-      document.querySelector('.deploy-btn').addEventListener('click', () => {
-        alert('🚀 Deployment feature coming soon!');
-      });
-
-      // 🏛️ Governance Toggle
+      gmBtn.addEventListener('click', () => alert(" GM! Have a great day builder!"));
+      deployBtn.addEventListener('click', () => alert("🚀 Deploy function coming soon!"));
+      
       govBtn.addEventListener('click', () => {
-        const showingGovernance = !govSection.classList.contains('hidden');
-
-        if (showingGovernance) {
-          govSection.classList.add('hidden');
+        const isVisible = !governanceSection.classList.contains('hidden');
+        if (isVisible) {
+          governanceSection.classList.add('hidden');
           supportSection.classList.remove('hidden');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
+          governanceSection.classList.remove('hidden');
           supportSection.classList.add('hidden');
-          govSection.classList.remove('hidden');
-          govSection.scrollIntoView({ behavior: 'smooth' });
+          governanceSection.scrollIntoView({ behavior: 'smooth' });
         }
       });
     });
