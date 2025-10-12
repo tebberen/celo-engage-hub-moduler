@@ -1,122 +1,74 @@
-import { CONTRACT_ADDRESS, CONTRACT_ABI, CELO_MAINNET_PARAMS, CELO_ALFAJORES_PARAMS } from "./src/utils/constants.js";
-import { connectWalletMetaMask, disconnectWallet, switchToCeloNetwork, checkCurrentNetwork } from "./src/services/walletService.js";
-import { loadUserProfile, setupUserProfile, createProposal, voteProposal, loadProposals, loadUserBadges } from "./src/services/contractService.js";
+import { connectWalletMetaMask, disconnectWallet, checkCurrentNetwork } from "./src/services/walletService.js";
+import { loadUserProfile, createProposal, voteProposal, loadProposals } from "./src/services/contractService.js";
 
-let provider = null;
-let signer = null;
-let isConnected = false;
-let userAddress = '';
-let hasSupported = false;
-let currentChainId = null;
-let userProfile = null;
-
-const initialSupportLinks = [
-  "https://farcaster.xyz/teberen/0x391c5713",
-  "https://farcaster.xyz/ertu",
-  "https://farcaster.xyz/ratmubaba",
-  "https://x.com/erturulsezar13",
-  "https://x.com/egldmvx",
-  "https://tebberen.github.io/celo-engage-hub/",
-  "https://x.com/meelioodas",
-  "https://x.com/luckyfromnecef/status/1972371920290259437",
-  "https://github.com/tebberen"
-];
-
-// 🔹 Link depolama
-function loadLinksFromStorage() {
-  const storedLinks = localStorage.getItem('celoEngageHubLinks');
-  if (storedLinks) {
-    return JSON.parse(storedLinks);
-  } else {
-    return initialSupportLinks.map(link => ({ link: link, clickCount: 0, timestamp: Date.now(), submitter: "community" }));
-  }
-}
-
-function saveLinksToStorage(links) {
-  localStorage.setItem('celoEngageHubLinks', JSON.stringify(links));
-}
-
-let allCommunityLinks = loadLinksFromStorage();
-
-function getPlatformName(url) {
-  if (url.includes('x.com') || url.includes('twitter.com')) return '🐦 X';
-  if (url.includes('farcaster.xyz') || url.includes('warpcast.com')) return '🔮 Farcaster';
-  if (url.includes('github.com')) return '💻 GitHub';
-  if (url.includes('youtube.com')) return '📺 YouTube';
-  if (url.includes('discord.com')) return '💬 Discord';
-  return '🌐 Website';
-}
-
+// Sayfa yüklendiğinde destek linklerini göster
 export function displaySupportLinks() {
-  const container = document.getElementById('linksContainer');
-  container.innerHTML = '';
-  const activeLinks = allCommunityLinks.filter(linkData => linkData.clickCount < 5);
-  if (activeLinks.length === 0) {
-    container.innerHTML = `
-      <div style="grid-column: 1 / -1;">
-        <div class="link-card">
-          <p>🌟 All links have reached maximum support! Submit new links to continue.</p>
-        </div>
-      </div>`;
-    return;
-  }
-  activeLinks.sort((a, b) => a.clickCount - b.clickCount);
-  activeLinks.forEach((linkData, index) => {
-    const platform = getPlatformName(linkData.link);
-    const linkCard = document.createElement('div');
-    let openStep2 = 'true';
-    if (linkData.link === "https://tebberen.github.io/celo-engage-hub/") openStep2 = 'false';
-    linkCard.innerHTML = `
-      <div class="link-card">
-        <div>
-          <div class="link-platform">${platform}</div>
-          <a href="${linkData.link}" target="_blank" class="support-link" onclick="handleCommunityLink('${linkData.link}', ${openStep2})">
-            ${linkData.link}
-          </a>
-        </div>
-        <div class="link-stats">
-          <div class="stat-item">
-            <div>Supports</div>
-            <div class="stat-value">${linkData.clickCount}/5</div>
-          </div>
-        </div>
-      </div>`;
-    container.appendChild(linkCard);
+  const links = [
+    { link: "https://farcaster.xyz/teberen", label: "🔮 Farcaster" },
+    { link: "https://x.com/luckyfromnecef", label: "🐦 X" },
+    { link: "https://github.com/tebberen", label: "💻 GitHub" }
+  ];
+
+  const container = document.getElementById("linksContainer");
+  container.innerHTML = "";
+
+  links.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "link-card";
+    div.innerHTML = `
+      <div class="link-platform">${item.label}</div>
+      <a href="${item.link}" target="_blank" class="support-link">${item.link}</a>
+    `;
+    container.appendChild(div);
   });
 }
 
-// 🔹 Link tıklama işlemi
-window.handleCommunityLink = function (linkUrl, openStep2) {
-  window.open(linkUrl, '_blank');
-  if (openStep2) {
-    document.getElementById('step1').classList.add('hidden');
-    document.getElementById('step2').classList.remove('hidden');
-  }
-};
+// 🔹 Bağlantı butonları
+const connectBtn = document.getElementById("connectWalletBtn");
+const disconnectBtn = document.getElementById("disconnectWalletBtn");
 
-// 🔹 GM, Deploy, Governance butonları
-document.getElementById("gmButton").addEventListener("click", () => alert("🌞 GM, Celo Builder! Keep shining."));
-document.getElementById("deployButton").addEventListener("click", () => alert("🚀 Deployment feature coming soon!"));
-document.getElementById("governanceButton").addEventListener("click", () => alert("🏛️ Governance dashboard under development."));
+if (connectBtn) connectBtn.addEventListener("click", connectWalletMetaMask);
+if (disconnectBtn) disconnectBtn.addEventListener("click", disconnectWallet);
 
-// 🔹 Sayfa yüklenince linkleri göster
-window.addEventListener('load', () => {
+// 🏛️ Governance butonuna tıklanınca Governance bölümü açılır
+const governanceButton = document.getElementById("governanceButton");
+if (governanceButton) {
+  governanceButton.addEventListener("click", () => {
+    const homeSection = document.getElementById("homeSection");
+    const governanceSection = document.getElementById("governanceSection");
+
+    // Ana sayfayı gizle, governance bölümünü göster
+    if (homeSection && governanceSection) {
+      homeSection.classList.add("hidden");
+      governanceSection.classList.remove("hidden");
+    }
+  });
+}
+
+// 🏠 Geri dön butonunu da ekleyelim (governance içindeyken)
+const governanceSection = document.getElementById("governanceSection");
+if (governanceSection) {
+  const backButton = document.createElement("button");
+  backButton.textContent = "🏠 Back to Home";
+  backButton.style.marginTop = "20px";
+  backButton.style.padding = "10px 20px";
+  backButton.style.borderRadius = "8px";
+  backButton.style.border = "none";
+  backButton.style.background = "#FBCC5C";
+  backButton.style.color = "#000";
+  backButton.style.fontWeight = "bold";
+  backButton.style.cursor = "pointer";
+
+  backButton.addEventListener("click", () => {
+    governanceSection.classList.add("hidden");
+    document.getElementById("homeSection").classList.remove("hidden");
+  });
+
+  governanceSection.appendChild(backButton);
+}
+
+// 🧩 Sayfa yüklendiğinde otomatik başlat
+window.addEventListener("DOMContentLoaded", () => {
   displaySupportLinks();
+  console.log("🚀 Celo Engage Hub frontend loaded!");
 });
-
-// 🔹 Wallet eventleri
-document.getElementById("connectWalletBtn").addEventListener("click", async () => {
-  const { connected, _provider, _signer, _address } = await connectWalletMetaMask();
-  if (connected) {
-    provider = _provider;
-    signer = _signer;
-    userAddress = _address;
-    isConnected = true;
-    displaySupportLinks();
-    loadUserProfile(provider, signer, userAddress);
-  }
-});
-
-document.getElementById("disconnectWalletBtn").addEventListener("click", disconnectWallet);
-document.getElementById("setupProfileBtn").addEventListener("click", () => setupUserProfile(provider, signer, userAddress));
-document.getElementById("createProposalBtn").addEventListener("click", () => createProposal(provider, signer));
