@@ -1,9 +1,5 @@
-// ✅ src/utils/constants.js
-
-// Akıllı kontrat adresi
 export const CONTRACT_ADDRESS = "0x22eA49c074098931a478F381f971C77486d185b2";
 
-// Akıllı kontrat ABI'si
 export const CONTRACT_ABI = [
   "function registerUser(string memory _username) public",
   "function updateProfile(string memory _username) public",
@@ -29,9 +25,8 @@ export const CONTRACT_ABI = [
   "error AlreadyVoted()"
 ];
 
-// ✅ CELO Ağ Parametreleri
 export const CELO_MAINNET_PARAMS = {
-  chainId: "0xA4EC", // 42220
+  chainId: "0xA4EC",
   chainName: "Celo Mainnet",
   nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
   rpcUrls: ["https://forno.celo.org"],
@@ -39,14 +34,13 @@ export const CELO_MAINNET_PARAMS = {
 };
 
 export const CELO_ALFAJORES_PARAMS = {
-  chainId: "0xAEF3", // 44787
+  chainId: "0xAEF3",
   chainName: "Celo Alfajores Testnet",
   nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
   rpcUrls: ["https://alfajores-forno.celo-testnet.org"],
   blockExplorerUrls: ["https://alfajores.celoscan.io/"]
 };
 
-// ✅ Başlangıçta gösterilecek örnek destek linkleri
 export const initialSupportLinks = [
   "https://farcaster.xyz/teberen/0x391c5713",
   "https://farcaster.xyz/ertu",
