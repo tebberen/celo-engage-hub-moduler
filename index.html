@@ -21,23 +21,13 @@
     <!-- ✅ Slogan -->
     <div class="slogan">Social TX - Where Every Interaction Builds Real Value</div>
 
-    <!-- 🌞🚀🏛️ Yeni Butonlar -->
+    <!-- 🌞🚀🏛️ Üç buton -->
     <div class="hero-buttons">
-      <div class="hero-item">
-        <button class="hero-btn gm-btn">🌞 GM</button>
-        <p class="hero-desc">Say GM to Celo Community!</p>
-      </div>
-      <div class="hero-item">
-        <button class="hero-btn deploy-btn">🚀 Deploy</button>
-        <p class="hero-desc">Launch your next Celo project.</p>
-      </div>
-      <div class="hero-item">
-        <button class="hero-btn gov-btn">🏛️ Governance</button>
-        <p class="hero-desc">Join proposals & vote together.</p>
-      </div>
+      <button class="hero-btn gm-btn">🌞 GM</button>
+      <button class="hero-btn deploy-btn">🚀 Deploy</button>
+      <button class="hero-btn gov-btn">🏛️ Governance</button>
     </div>
 
-    <!-- ✅ Connect Wallet -->
     <div class="subheader">If you want support, support first</div>
     <button id="connectWalletBtn" class="connect-btn">🔗 Connect Wallet</button>
   </div>
@@ -59,24 +49,12 @@
         <div id="networkInfo" style="font-size: 12px; margin-top: 5px;"></div>
         <button id="disconnectWalletBtn" class="disconnect-btn">Disconnect</button>
       </div>
-
-      <div class="celo-ecosystem">
-        <h3>🟡 Celo Ecosystem</h3>
-        <a href="https://celo.org" target="_blank" class="celo-link">🌐 Celo Official</a>
-        <a href="https://docs.celo.org" target="_blank" class="celo-link">📚 Documentation</a>
-        <a href="https://developers.celo.org" target="_blank" class="celo-link">💼 Developer Portal</a>
-        <a href="https://celoscan.io" target="_blank" class="celo-link">🔍 Explorer</a>
-        <a href="https://forum.celo.org" target="_blank" class="celo-link">💬 Forum</a>
-        <a href="https://x.com/Celo" target="_blank" class="celo-link">🐦 Twitter</a>
-        <a href="https://chat.celo.org" target="_blank" class="celo-link">💬 Discord</a>
-        <a href="https://blog.celo.org" target="_blank" class="celo-link">📰 Blog</a>
-        <a href="https://github.com/celo-org" target="_blank" class="celo-link">💻 GitHub</a>
-      </div>
     </div>
 
     <div class="main-content">
       <div class="content-layout">
-        <div id="step1" class="support-section">
+        <!-- ✅ Support Section -->
+        <div id="supportSection" class="support-section">
           <div class="step-indicator">
             <span class="step-number">1</span> Support Community Members
           </div>
@@ -87,7 +65,7 @@
           </div>
         </div>
 
-        <!-- 🏛️ Community Governance (Başta gizli) -->
+        <!-- 🏛️ Governance (Başta gizli) -->
         <div id="governanceSection" class="governance-section hidden">
           <div class="step-indicator">
             <span class="step-number">🏛️</span> Community Governance
@@ -108,29 +86,37 @@
   <!-- ✅ JS -->
   <script type="module" src="./src/app.js"></script>
 
-  <!-- ✅ Buton Etkileşimleri -->
+  <!-- ✅ Buton etkileşimleri -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+      const govBtn = document.querySelector('.gov-btn');
+      const govSection = document.getElementById('governanceSection');
+      const supportSection = document.getElementById('supportSection');
+
       // 🌞 GM
       document.querySelector('.gm-btn').addEventListener('click', () => {
-        alert('🌞 GM Celo fam! Have a productive day!');
+        alert('🌞 GM! Have a great day, Celo builder!');
       });
 
       // 🚀 Deploy
       document.querySelector('.deploy-btn').addEventListener('click', () => {
-        alert('🚀 Deploy feature coming soon...');
+        alert('🚀 Deployment feature coming soon!');
       });
 
-      // 🏛️ Governance - Göster/Gizle
-      const govBtn = document.querySelector('.gov-btn');
-      const govSection = document.getElementById('governanceSection');
-      
+      // 🏛️ Governance görünüm geçişi
       govBtn.addEventListener('click', () => {
-        if (govSection.classList.contains('hidden')) {
+        const showingGovernance = !govSection.classList.contains('hidden');
+
+        if (showingGovernance) {
+          // Governance gizle, support geri gelsin
+          govSection.classList.add('hidden');
+          supportSection.classList.remove('hidden');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          // Support gizle, governance göster
+          supportSection.classList.add('hidden');
           govSection.classList.remove('hidden');
           govSection.scrollIntoView({ behavior: 'smooth' });
-        } else {
-          govSection.classList.add('hidden');
         }
       });
     });
