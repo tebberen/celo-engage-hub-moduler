@@ -1,112 +1,81 @@
-const { ethers } = window;
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../utils/constants.js';
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from '../utils/constants.js';
 
 export class ContractService {
   constructor(walletService) {
     this.walletService = walletService;
-    this.contract = null;
   }
 
-  initializeContract() {
-    const provider = this.walletService.getProvider();
-    if (!provider) return;
+  // ✅ Kontrata erişim (provider veya signer ile)
+  getContract() {
+    if (!this.walletService.provider) {
+      throw new Error("❌ Wallet not connected");
+    }
+    return new ethers.Contract(
+      CONTRACT_ADDRESS,
+      CONTRACT_ABI,
+      this.walletService.signer || this.walletService.provider
+    );
+  }
+
+  // ✅ Proposal oluşturma
+  async createProposal(title, description) {
+    if (!this.walletService.getIsConnected()) {
+      throw new Error("Wallet not connected");
+    }
+
     try {
-      this.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      console.log("Contract initialized");
-    } catch (e) {
-      console.error("initializeContract error:", e);
+      const contract = this.getContract();
+      const duration = 3 * 24 * 60 * 60; // 3 gün
+      const tx = await contract.createProposal(title, description, duration, { gasLimit: 600000 });
+      console.log("📤 TX sent:", tx.hash);
+      await tx.wait();
+      console.log("✅ TX confirmed!");
+    } catch (error) {
+      console.error("❌ Error creating proposal:", error);
+      throw error;
     }
   }
 
-  async getUserProfile(userAddress = null) {
-    if (!this.contract) this.initializeContract();
-    try {
-      const addr = userAddress || this.walletService.getUserAddress();
-      const p = await this.contract.getUserProfile(addr);
-      return {
-        username: p[0],
-        supportCount: p[1].toString(),
-        reputation: p[2].toString(),
-        badgeCount: p[3].toString(),
-        isActive: p[4],
-        timestamp: p[5].toString(),
-      };
-    } catch (e) {
-      console.error("getUserProfile error:", e);
-      return null;
-    }
-  }
-
-  async registerUser(username) {
-    if (!this.contract) this.initializeContract();
-    try {
-      const c = this.contract.connect(this.walletService.getSigner());
-      const tx = await c.registerUser(username, { gasLimit: 500000 });
-      return await tx.wait();
-    } catch (e) { console.error("registerUser error:", e); throw e; }
-  }
-
-  async updateProfile(username) {
-    if (!this.contract) this.initializeContract();
-    try {
-      const c = this.contract.connect(this.walletService.getSigner());
-      const tx = await c.updateProfile(username, { gasLimit: 300000 });
-      return await tx.wait();
-    } catch (e) { console.error("updateProfile error:", e); throw e; }
-  }
-
-  async createProposal(title, description, duration = 3*24*60*60) {
-    if (!this.contract) this.initializeContract();
-    try {
-      const c = this.contract.connect(this.walletService.getSigner());
-      const tx = await c.createProposal(title, description, duration, { gasLimit: 600000 });
-      return await tx.wait();
-    } catch (e) { console.error("createProposal error:", e); throw e; }
-  }
-
-  async voteProposal(id, support) {
-    if (!this.contract) this.initializeContract();
-    try {
-      const c = this.contract.connect(this.walletService.getSigner());
-      const tx = await c.voteProposal(id, support, { gasLimit: 400000 });
-      return await tx.wait();
-    } catch (e) { console.error("voteProposal error:", e); throw e; }
-  }
-
+  // ✅ Aktif proposal’ları getir
   async getActiveProposals() {
-    if (!this.contract) this.initializeContract();
     try {
-      const list = await this.contract.getActiveProposals();
-      return list.map(x => x.toString());
-    } catch (e) { console.error("getActiveProposals error:", e); return []; }
+      const contract = this.getContract();
+      const ids = await contract.getActiveProposals();
+      const proposals = [];
+
+      for (const id of ids) {
+        const details = await contract.getProposalDetails(id);
+        proposals.push({
+          id: id.toString(),
+          title: details.title,
+          description: details.description,
+          votesFor: details.votesFor.toString(),
+          votesAgainst: details.votesAgainst.toString(),
+        });
+      }
+
+      return proposals;
+    } catch (error) {
+      console.error("❌ Error loading proposals:", error);
+      return [];
+    }
   }
 
-  async getProposalDetails(id) {
-    if (!this.contract) this.initializeContract();
-    try {
-      const d = await this.contract.getProposalDetails(id);
-      return {
-        id: d[0].toString(), title: d[1], description: d[2], creator: d[3],
-        votesFor: d[4].toString(), votesAgainst: d[5].toString(),
-        deadline: d[6].toString(), executed: d[7]
-      };
-    } catch (e) { console.error("getProposalDetails error:", e); return null; }
-  }
+  // ✅ Proposal oylama
+  async voteProposal(proposalId, support) {
+    if (!this.walletService.getIsConnected()) {
+      throw new Error("Wallet not connected");
+    }
 
-  async getUserBadges(addr = null) {
-    if (!this.contract) this.initializeContract();
     try {
-      const a = addr || this.walletService.getUserAddress();
-      return await this.contract.getUserBadges(a);
-    } catch (e) { console.error("getUserBadges error:", e); return []; }
-  }
-
-  async getPlatformStats() {
-    if (!this.contract) this.initializeContract();
-    try {
-      const totalUsers = await this.contract.totalUsers();
-      const proposalCount = await this.contract.proposalCount();
-      return { totalUsers: totalUsers.toString(), totalProposals: proposalCount.toString() };
-    } catch (e) { console.error("getPlatformStats error:", e); return { totalUsers:"0", totalProposals:"0" }; }
+      const contract = this.getContract();
+      const tx = await contract.voteProposal(proposalId, support, { gasLimit: 400000 });
+      console.log("📤 Vote TX:", tx.hash);
+      await tx.wait();
+      alert("✅ Vote submitted successfully!");
+    } catch (error) {
+      console.error("❌ Error voting:", error);
+      throw error;
+    }
   }
 }
