@@ -1,7 +1,4 @@
-// ✅ TARAYICI (CDN) UYUMLU SÜRÜM
-// Artık import kullanmıyoruz çünkü ethers.js <head> kısmında CDN ile yüklendi.
 const { ethers } = window;
-
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '../utils/constants.js';
 
 export class ContractService {
@@ -10,177 +7,106 @@ export class ContractService {
     this.contract = null;
   }
 
-  // ✅ Contract instance oluştur
   initializeContract() {
-    if (!this.walletService.getProvider()) {
-      console.error("Provider not available");
-      return;
-    }
-
+    const provider = this.walletService.getProvider();
+    if (!provider) return;
     try {
-      this.contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        this.walletService.getProvider()
-      );
-      console.log("✅ Contract initialized");
-    } catch (error) {
-      console.error("❌ Error initializing contract:", error);
+      this.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      console.log("Contract initialized");
+    } catch (e) {
+      console.error("initializeContract error:", e);
     }
   }
 
-  // ✅ Kullanıcı profilini getir
   async getUserProfile(userAddress = null) {
     if (!this.contract) this.initializeContract();
-
     try {
-      const address = userAddress || this.walletService.getUserAddress();
-      const profile = await this.contract.getUserProfile(address);
+      const addr = userAddress || this.walletService.getUserAddress();
+      const p = await this.contract.getUserProfile(addr);
       return {
-        username: profile[0],
-        supportCount: profile[1].toString(),
-        reputation: profile[2].toString(),
-        badgeCount: profile[3].toString(),
-        isActive: profile[4],
-        timestamp: profile[5].toString(),
+        username: p[0],
+        supportCount: p[1].toString(),
+        reputation: p[2].toString(),
+        badgeCount: p[3].toString(),
+        isActive: p[4],
+        timestamp: p[5].toString(),
       };
-    } catch (error) {
-      console.error("Error getting user profile:", error);
+    } catch (e) {
+      console.error("getUserProfile error:", e);
       return null;
     }
   }
 
-  // ✅ Kullanıcıyı kaydet
   async registerUser(username) {
     if (!this.contract) this.initializeContract();
-
     try {
-      const contractWithSigner = this.contract.connect(this.walletService.getSigner());
-      const tx = await contractWithSigner.registerUser(username, { gasLimit: 500000 });
-      console.log("Register TX sent:", tx.hash);
-      const receipt = await tx.wait();
-      console.log("Register TX confirmed:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error registering user:", error);
-      throw error;
-    }
+      const c = this.contract.connect(this.walletService.getSigner());
+      const tx = await c.registerUser(username, { gasLimit: 500000 });
+      return await tx.wait();
+    } catch (e) { console.error("registerUser error:", e); throw e; }
   }
 
-  // ✅ Profili güncelle
   async updateProfile(username) {
     if (!this.contract) this.initializeContract();
-
     try {
-      const contractWithSigner = this.contract.connect(this.walletService.getSigner());
-      const tx = await contractWithSigner.updateProfile(username, { gasLimit: 300000 });
-      console.log("Update TX sent:", tx.hash);
-      const receipt = await tx.wait();
-      console.log("Update TX confirmed:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      throw error;
-    }
+      const c = this.contract.connect(this.walletService.getSigner());
+      const tx = await c.updateProfile(username, { gasLimit: 300000 });
+      return await tx.wait();
+    } catch (e) { console.error("updateProfile error:", e); throw e; }
   }
 
-  // ✅ Proposal oluştur
-  async createProposal(title, description, duration = 3 * 24 * 60 * 60) {
+  async createProposal(title, description, duration = 3*24*60*60) {
     if (!this.contract) this.initializeContract();
-
     try {
-      const contractWithSigner = this.contract.connect(this.walletService.getSigner());
-      const tx = await contractWithSigner.createProposal(title, description, duration, { gasLimit: 600000 });
-      console.log("Create proposal TX sent:", tx.hash);
-      const receipt = await tx.wait();
-      console.log("Create proposal TX confirmed:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error creating proposal:", error);
-      throw error;
-    }
+      const c = this.contract.connect(this.walletService.getSigner());
+      const tx = await c.createProposal(title, description, duration, { gasLimit: 600000 });
+      return await tx.wait();
+    } catch (e) { console.error("createProposal error:", e); throw e; }
   }
 
-  // ✅ Proposal'a oy ver
-  async voteProposal(proposalId, support) {
+  async voteProposal(id, support) {
     if (!this.contract) this.initializeContract();
-
     try {
-      const contractWithSigner = this.contract.connect(this.walletService.getSigner());
-      const tx = await contractWithSigner.voteProposal(proposalId, support, { gasLimit: 400000 });
-      console.log("Vote TX sent:", tx.hash);
-      const receipt = await tx.wait();
-      console.log("Vote TX confirmed:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error voting:", error);
-      throw error;
-    }
+      const c = this.contract.connect(this.walletService.getSigner());
+      const tx = await c.voteProposal(id, support, { gasLimit: 400000 });
+      return await tx.wait();
+    } catch (e) { console.error("voteProposal error:", e); throw e; }
   }
 
-  // ✅ Aktif proposal'ları getir
   async getActiveProposals() {
     if (!this.contract) this.initializeContract();
-
     try {
-      const activeProposals = await this.contract.getActiveProposals();
-      return activeProposals.map((id) => id.toString());
-    } catch (error) {
-      console.error("Error getting active proposals:", error);
-      return [];
-    }
+      const list = await this.contract.getActiveProposals();
+      return list.map(x => x.toString());
+    } catch (e) { console.error("getActiveProposals error:", e); return []; }
   }
 
-  // ✅ Proposal detaylarını getir
-  async getProposalDetails(proposalId) {
+  async getProposalDetails(id) {
     if (!this.contract) this.initializeContract();
-
     try {
-      const details = await this.contract.getProposalDetails(proposalId);
+      const d = await this.contract.getProposalDetails(id);
       return {
-        id: details[0].toString(),
-        title: details[1],
-        description: details[2],
-        creator: details[3],
-        votesFor: details[4].toString(),
-        votesAgainst: details[5].toString(),
-        deadline: details[6].toString(),
-        executed: details[7],
+        id: d[0].toString(), title: d[1], description: d[2], creator: d[3],
+        votesFor: d[4].toString(), votesAgainst: d[5].toString(),
+        deadline: d[6].toString(), executed: d[7]
       };
-    } catch (error) {
-      console.error("Error getting proposal details:", error);
-      return null;
-    }
+    } catch (e) { console.error("getProposalDetails error:", e); return null; }
   }
 
-  // ✅ Kullanıcı badge'lerini getir
-  async getUserBadges(userAddress = null) {
+  async getUserBadges(addr = null) {
     if (!this.contract) this.initializeContract();
-
     try {
-      const address = userAddress || this.walletService.getUserAddress();
-      const badges = await this.contract.getUserBadges(address);
-      return badges;
-    } catch (error) {
-      console.error("Error getting user badges:", error);
-      return [];
-    }
+      const a = addr || this.walletService.getUserAddress();
+      return await this.contract.getUserBadges(a);
+    } catch (e) { console.error("getUserBadges error:", e); return []; }
   }
 
-  // ✅ Platform istatistiklerini getir
   async getPlatformStats() {
     if (!this.contract) this.initializeContract();
-
     try {
       const totalUsers = await this.contract.totalUsers();
       const proposalCount = await this.contract.proposalCount();
-      return {
-        totalUsers: totalUsers.toString(),
-        totalProposals: proposalCount.toString(),
-      };
-    } catch (error) {
-      console.error("Error getting platform stats:", error);
-      return { totalUsers: "0", totalProposals: "0" };
-    }
+      return { totalUsers: totalUsers.toString(), totalProposals: proposalCount.toString() };
+    } catch (e) { console.error("getPlatformStats error:", e); return { totalUsers:"0", totalProposals:"0" }; }
   }
 }
