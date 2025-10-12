@@ -454,3 +454,53 @@ input, textarea {
     cursor: pointer; 
     margin-top: 15px; 
 }
+/* 🌞🚀🏛️ Hero Buttons */
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 25px;
+  flex-wrap: wrap;
+}
+
+.hero-item {
+  text-align: center;
+}
+
+.hero-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 26px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #000;
+  background: linear-gradient(135deg, #fbcc5c, #ffdf85);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+  transition: all 0.25s ease;
+}
+
+.hero-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+}
+
+.gm-btn {
+  background: linear-gradient(135deg, #ffb347, #ffcc33);
+}
+
+.deploy-btn {
+  background: linear-gradient(135deg, #35d07f, #6cf5a1);
+}
+
+.gov-btn {
+  background: linear-gradient(135deg, #6b5bff, #b19fff);
+  color: #fff;
+}
+
+.hero-desc {
+  font-size: 13px;
+  color: #444;
+  margin-top: 8px;
+  font-style: italic;
+}
