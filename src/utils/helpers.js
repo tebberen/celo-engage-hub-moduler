@@ -1,45 +1,85 @@
-import { initialSupportLinks } from './constants.js';
-
+// ✅ Linkleri localStorage’da yönetir
 export function loadLinksFromStorage() {
-  const saved = localStorage.getItem('communityLinks');
-  if (saved) return JSON.parse(saved);
-  // ilk açılışta başlangıç linkleri
-  const seed = initialSupportLinks.map(link => ({ link, clickCount: 0, timestamp: Date.now() }));
-  localStorage.setItem('communityLinks', JSON.stringify(seed));
-  return seed;
+  const storedLinks = localStorage.getItem("celoEngageHubLinks");
+  if (storedLinks) {
+    return JSON.parse(storedLinks);
+  } else {
+    const initialLinks = [
+      "https://farcaster.xyz/teberen/0x391c5713",
+      "https://farcaster.xyz/ertu",
+      "https://x.com/luckyfromnecef/status/1972371920290259437",
+      "https://github.com/tebberen",
+      "https://x.com/egldmvx?s=21"
+    ];
+    return initialLinks.map(link => ({
+      link,
+      clickCount: 0,
+      timestamp: Date.now(),
+      submitter: "community"
+    }));
+  }
 }
 
 export function saveLinksToStorage(links) {
-  localStorage.setItem('communityLinks', JSON.stringify(links));
+  localStorage.setItem("celoEngageHubLinks", JSON.stringify(links));
 }
 
+// ✅ Platform ismini döndürür (ikonla birlikte)
+export function getPlatformName(url) {
+  if (url.includes("x.com") || url.includes("twitter.com")) return "🐦 X";
+  if (url.includes("farcaster.xyz") || url.includes("warpcast.com")) return "🔮 Farcaster";
+  if (url.includes("github.com")) return "💻 GitHub";
+  if (url.includes("youtube.com")) return "📺 YouTube";
+  if (url.includes("discord.com")) return "💬 Discord";
+  return "🌐 Website";
+}
+
+// ✅ Destek bağlantılarını ekrana basar
 export function displaySupportLinks(links, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  container.innerHTML = '';
 
-  if (!links || links.length === 0) {
-    container.innerHTML = '<p>No community links yet. Be the first to share!</p>';
+  container.innerHTML = "";
+  const activeLinks = links.filter(l => l.clickCount < 5);
+
+  if (activeLinks.length === 0) {
+    container.innerHTML = `
+      <div class="link-card">
+        <p>🌟 All links have reached maximum support!</p>
+      </div>`;
     return;
   }
 
-  links.forEach((item, index) => {
-    const card = document.createElement('div');
-    card.className = 'link-card';
-    card.innerHTML = `
-      <a href="${item.link}" target="_blank">${item.link}</a>
-      <div class="link-stats">
-        <div class="stat-item"><div>👍 Supports</div><div class="stat-value">${item.clickCount || 0}</div></div>
+  activeLinks.forEach(linkData => {
+    const platform = getPlatformName(linkData.link);
+    const linkCard = document.createElement("div");
+    linkCard.classList.add("link-card");
+    linkCard.innerHTML = `
+      <div>
+        <div class="link-platform">${platform}</div>
+        <a href="${linkData.link}" target="_blank" class="support-link">${linkData.link}</a>
       </div>
-      <button class="support-btn" onclick="handleCommunityLink(${index})">Support This Content</button>
+      <div class="link-stats">
+        <div class="stat-item">
+          <div>Supports</div>
+          <div class="stat-value">${linkData.clickCount}/5</div>
+        </div>
+      </div>
+      <button class="supportBtn">👍 Support This Content</button>
     `;
-    container.appendChild(card);
+
+    const btn = linkCard.querySelector(".supportBtn");
+    btn.addEventListener("click", () => {
+      linkData.clickCount++;
+      saveLinksToStorage(links);
+      displaySupportLinks(links, containerId);
+    });
+
+    container.appendChild(linkCard);
   });
 }
 
-export function handleCommunityLink(index) {
-  const links = loadLinksFromStorage();
-  links[index].clickCount = (links[index].clickCount || 0) + 1;
-  saveLinksToStorage(links);
-  displaySupportLinks(links, 'linksContainer');
+// ✅ Link tıklama handler
+export function handleCommunityLink(url) {
+  window.open(url, "_blank");
 }
