@@ -1,35 +1,61 @@
-/* 🌞 GM / 🚀 Deploy / 🏛️ Governance Butonları */
-.top-buttons {
+/* 🌞🚀🏛️ Hero Buttons */
+.hero-buttons {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin: 15px 0;
+  gap: 30px;
+  margin-top: 25px;
+  flex-wrap: wrap;
 }
 
-.top-buttons button {
-  padding: 10px 22px;
+.hero-item {
+  text-align: center;
+}
+
+.hero-btn {
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  padding: 12px 26px;
+  font-size: 16px;
   font-weight: bold;
-  color: white;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  color: #000;
+  background: linear-gradient(135deg, #fbcc5c, #ffdf85);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+  transition: all 0.25s ease;
+}
+
+.hero-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
 }
 
 .gm-btn {
-  background: linear-gradient(135deg, #ffcc00, #ff9900);
+  background: linear-gradient(135deg, #ffb347, #ffcc33);
 }
 
 .deploy-btn {
-  background: linear-gradient(135deg, #1ec58f, #00a86b);
+  background: linear-gradient(135deg, #35d07f, #6cf5a1);
 }
 
 .gov-btn {
-  background: linear-gradient(135deg, #4b6cb7, #182848);
+  background: linear-gradient(135deg, #6b5bff, #b19fff);
+  color: #fff;
 }
 
-.top-buttons button:hover {
-  transform: scale(1.07);
-  opacity: 0.9;
+.hero-desc {
+  font-size: 13px;
+  color: #444;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* 🏛️ Governance Section Animasyonu */
+.governance-section {
+  transition: all 0.4s ease;
+  opacity: 1;
+}
+
+.hidden {
+  display: none !important;
+  opacity: 0;
 }
