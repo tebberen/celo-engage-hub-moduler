@@ -1,8 +1,12 @@
-// ✅ src/utils/helpers.js
+import { initialSupportLinks } from './constants.js';
 
 export function loadLinksFromStorage() {
   const saved = localStorage.getItem('communityLinks');
-  return saved ? JSON.parse(saved) : [];
+  if (saved) return JSON.parse(saved);
+  // ilk açılışta başlangıç linkleri
+  const seed = initialSupportLinks.map(link => ({ link, clickCount: 0, timestamp: Date.now() }));
+  localStorage.setItem('communityLinks', JSON.stringify(seed));
+  return seed;
 }
 
 export function saveLinksToStorage(links) {
@@ -11,6 +15,7 @@ export function saveLinksToStorage(links) {
 
 export function displaySupportLinks(links, containerId) {
   const container = document.getElementById(containerId);
+  if (!container) return;
   container.innerHTML = '';
 
   if (!links || links.length === 0) {
@@ -23,8 +28,10 @@ export function displaySupportLinks(links, containerId) {
     card.className = 'link-card';
     card.innerHTML = `
       <a href="${item.link}" target="_blank">${item.link}</a>
-      <p>Supports: ${item.clickCount || 0}</p>
-      <button onclick="handleCommunityLink(${index})">Support</button>
+      <div class="link-stats">
+        <div class="stat-item"><div>👍 Supports</div><div class="stat-value">${item.clickCount || 0}</div></div>
+      </div>
+      <button class="support-btn" onclick="handleCommunityLink(${index})">Support This Content</button>
     `;
     container.appendChild(card);
   });
