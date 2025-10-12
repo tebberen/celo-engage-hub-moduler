@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Celo Engage Hub</title>
+
+  <!-- ✅ CSS bağlantısı -->
   <link rel="stylesheet" href="./src/styles/main.css" />
+
+  <!-- ✅ Ethers.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 </head>
 
@@ -24,11 +28,19 @@
     </div>
 
     <div class="subheader">If you want support, support first</div>
+
     <button id="connectWalletBtn" class="connect-btn">🔗 Connect Wallet</button>
   </div>
 
+  <!-- ✅ Sidebar & Main Layout -->
   <div class="container">
     <div class="sidebar">
+      <div id="walletInfo" class="wallet-address hidden">
+        ✅ Connected: <span id="walletAddress"></span>
+        <div id="networkInfo" style="font-size: 12px; margin-top: 5px;"></div>
+      </div>
+
+      <!-- 🟡 Celo Ecosystem -->
       <div class="celo-ecosystem">
         <h3>🟡 Celo Ecosystem</h3>
         <a href="https://celo.org" target="_blank" class="celo-link">🌐 Celo Official</a>
@@ -44,7 +56,6 @@
     </div>
 
     <div class="main-content">
-      <!-- ✅ Support Section -->
       <div id="step1" class="support-section">
         <div class="step-indicator">
           <span class="step-number">1</span> Support Community Members
@@ -56,7 +67,6 @@
         </div>
       </div>
 
-      <!-- ✅ Governance Section -->
       <div id="governanceSection" class="governance-section hidden">
         <div class="step-indicator">
           <span class="step-number">🏛️</span> Community Governance
@@ -66,6 +76,7 @@
           <input type="text" placeholder="Proposal title..." id="proposalTitle" />
           <textarea placeholder="Proposal description..." id="proposalDescription" rows="3"></textarea>
           <button id="createProposalBtn">📝 Create Proposal</button>
+
           <h3 style="margin-top: 30px;">📋 Active Proposals</h3>
           <div id="proposalsContainer"></div>
         </div>
@@ -73,31 +84,7 @@
     </div>
   </div>
 
+  <!-- ✅ JS -->
   <script type="module" src="./src/app.js"></script>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const gmBtn = document.querySelector('.gm-btn');
-      const deployBtn = document.querySelector('.deploy-btn');
-      const govBtn = document.querySelector('.gov-btn');
-      const supportSection = document.getElementById('step1');
-      const governanceSection = document.getElementById('governanceSection');
-
-      gmBtn.addEventListener('click', () => alert(" GM! Have a great day builder!"));
-      deployBtn.addEventListener('click', () => alert("🚀 Deploy function coming soon!"));
-      
-      govBtn.addEventListener('click', () => {
-        const isVisible = !governanceSection.classList.contains('hidden');
-        if (isVisible) {
-          governanceSection.classList.add('hidden');
-          supportSection.classList.remove('hidden');
-        } else {
-          governanceSection.classList.remove('hidden');
-          supportSection.classList.add('hidden');
-          governanceSection.scrollIntoView({ behavior: 'smooth' });
-        }
-      });
-    });
-  </script>
 </body>
 </html>
