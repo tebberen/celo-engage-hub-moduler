@@ -1,11 +1,7 @@
-/* 🎨 Genel Sayfa Ayarları */
-* {
-  box-sizing: border-box;
-}
-
+/* 🌕 Genel Görünüm */
 body {
   background-color: #ffffff;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   color: #000000;
   margin: 0;
   padding: 20px;
@@ -14,108 +10,126 @@ body {
   align-items: center;
 }
 
-/* 🧭 Başlık ve Slogan */
 header {
-  background: linear-gradient(135deg, #fbcc5c 0%, #000000 100%);
+  background: linear-gradient(135deg, #FBCC5C 0%, #000000 100%);
   color: white;
-  padding: 25px;
+  padding: 20px;
   font-size: 28px;
   font-weight: bold;
   border-radius: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   text-align: center;
   width: 100%;
-  max-width: 1000px;
+  max-width: 900px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .slogan {
-  font-size: 18px;
-  color: #333;
+  font-size: 16px;
+  margin-top: 5px;
   text-align: center;
-  font-weight: 500;
-  margin-top: 10px;
+  color: #333;
 }
 
 .subheader {
-  font-size: 15px;
-  color: #555;
-  margin-top: 8px;
   text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
 }
 
-/* 🔗 Connect Wallet Butonu */
+/* 🌞 GM / 🚀 Deploy / 🏛️ Governance Butonları */
+.top-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.top-buttons button {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.gm-btn {
+  background: linear-gradient(135deg, #ffcc00, #ff9900);
+}
+
+.deploy-btn {
+  background: linear-gradient(135deg, #1ec58f, #00a86b);
+}
+
+.gov-btn {
+  background: linear-gradient(135deg, #4b6cb7, #182848);
+}
+
+.top-buttons button:hover {
+  transform: scale(1.07);
+  opacity: 0.9;
+  box-shadow: 0 6px 10px rgba(0,0,0,0.25);
+}
+
+/* 🔗 Wallet Butonu */
 .connect-btn {
-  background-color: #35d07f;
+  background: linear-gradient(135deg, #35d07f, #0b7d3e);
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 12px 30px;
-  font-size: 16px;
+  border-radius: 8px;
+  padding: 12px 25px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.25s ease;
-  margin-top: 18px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .connect-btn:hover {
-  background-color: #2cb972;
-  transform: translateY(-3px);
+  transform: scale(1.05);
+  opacity: 0.9;
 }
 
-/* ⚙️ Wallet Modal */
-.wallet-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.wallet-modal-content {
-  background: #fff;
-  padding: 30px;
-  border-radius: 15px;
-  text-align: center;
-  width: 300px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-}
-
-.wallet-option,
-.close-modal {
-  background-color: #fbcc5c;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 10px;
-  margin: 10px 0;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s;
-}
-
-.wallet-option:hover,
-.close-modal:hover {
-  background-color: #f5b800;
-}
-
-/* 🟡 Celo Sidebar */
+/* 🟡 Layout */
 .container {
   display: flex;
-  max-width: 1300px;
+  max-width: 1400px;
   width: 100%;
   gap: 30px;
-  margin-top: 40px;
+  margin-top: 25px;
+  align-items: flex-start;
 }
 
+/* 🟨 Sidebar */
 .sidebar {
   width: 300px;
   flex-shrink: 0;
 }
 
+.celo-ecosystem {
+  background: linear-gradient(135deg, #f9d776, #e2b233);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.celo-link {
+  display: block;
+  margin-bottom: 8px;
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.celo-link:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+/* 🟩 Main Content */
 .main-content {
   flex: 1;
   display: flex;
@@ -123,140 +137,46 @@ header {
   align-items: center;
 }
 
-.celo-link {
-  display: block;
-  color: #333;
-  text-decoration: none;
-  padding: 8px 0;
-  transition: 0.25s;
-}
-
-.celo-link:hover {
-  color: #35d07f;
-  font-weight: bold;
-}
-
-/* 📊 Stats */
-.stats-container {
-  margin-top: 30px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.stat-card {
-  background: #f8f8f8;
-  border-radius: 12px;
-  padding: 15px;
-  text-align: center;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-}
-
-.stat-value {
-  font-size: 22px;
-  font-weight: bold;
-  color: #000;
-  margin-top: 5px;
-}
-
-/* 🟢 Support Section */
+/* 📋 Support Section */
 .support-section {
   width: 100%;
-  max-width: 800px;
-  text-align: center;
+  max-width: 900px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .step-indicator {
-  background: #fbcc5c;
-  border-radius: 10px;
-  padding: 10px;
   font-weight: bold;
-  margin-bottom: 15px;
+  margin: 10px 0;
+  font-size: 18px;
+}
+
+.step-container {
+  border: 2px solid #f4d35e;
+  background-color: #fff8e1;
+  border-radius: 12px;
+  padding: 15px;
 }
 
 .links-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 15px;
   margin-top: 15px;
 }
 
 /* 🏛️ Governance Section */
 .governance-section {
-  transition: all 0.4s ease;
-  opacity: 1;
   width: 100%;
-  max-width: 800px;
-  text-align: center;
-}
-
-.governance-section input,
-.governance-section textarea {
-  width: 90%;
-  margin-top: 10px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.governance-section button {
-  margin-top: 15px;
-  padding: 10px 20px;
-  background-color: #6b5bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.25s;
-}
-
-.governance-section button:hover {
-  background-color: #5644ff;
-  transform: translateY(-2px);
-}
-
-/* 🌞🚀🏛️ Hero Butonları */
-.hero-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin: 25px 0;
-  flex-wrap: wrap;
-}
-
-.hero-btn {
-  border: none;
+  max-width: 900px;
+  background-color: #eef3ff;
   border-radius: 10px;
-  padding: 12px 26px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #000;
-  background: linear-gradient(135deg, #fbcc5c, #ffdf85);
-  box-shadow: 0 5px 12px rgba(0,0,0,0.15);
-  transition: all 0.25s ease;
+  border: 2px solid #4b6cb7;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: opacity 0.4s ease, transform 0.3s ease;
 }
 
-.hero-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
-}
-
-.gm-btn {
-  background: linear-gradient(135deg, #ffb347, #ffcc33);
-}
-
-.deploy-btn {
-  background: linear-gradient(135deg, #35d07f, #6cf5a1);
-}
-
-.gov-btn {
-  background: linear-gradient(135deg, #6b5bff, #b19fff);
-  color: #fff;
-}
-
-/* 🔒 Hidden Class */
+/* 🌫️ Hidden Class */
 .hidden {
   display: none !important;
-  opacity: 0;
 }
