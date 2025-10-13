@@ -1,129 +1,122 @@
-import { submitLinkOnChain } from "./src/services/contractService.js";
-import { loadLinksFromStorage, saveLinksToStorage } from "./helpers.js";
+import { CONTRACT_ADDRESS, CONTRACT_ABI, CELO_MAINNET_PARAMS, CELO_ALFAJORES_PARAMS } from "./src/utils/constants.js";
+import { connectWalletMetaMask, disconnectWallet, switchToCeloNetwork, checkCurrentNetwork } from "./src/services/walletService.js";
+import { loadUserProfile, setupUserProfile, createProposal, voteProposal, loadProposals, loadUserBadges } from "./src/services/contractService.js";
 
-let communityLinks = [];
+let provider = null;
+let signer = null;
+let isConnected = false;
+let userAddress = '';
+let hasSupported = false;
+let currentChainId = null;
+let userProfile = null;
+
+const initialSupportLinks = [
+  "https://farcaster.xyz/teberen/0x391c5713",
+  "https://farcaster.xyz/ertu",
+  "https://farcaster.xyz/ratmubaba",
+  "https://x.com/erturulsezar13",
+  "https://x.com/egldmvx",
+  "https://tebberen.github.io/celo-engage-hub/",
+  "https://x.com/meelioodas",
+  "https://x.com/luckyfromnecef/status/1972371920290259437",
+  "https://github.com/tebberen"
+];
+
+// 🔹 Link depolama
+function loadLinksFromStorage() {
+  const storedLinks = localStorage.getItem('celoEngageHubLinks');
+  if (storedLinks) {
+    return JSON.parse(storedLinks);
+  } else {
+    return initialSupportLinks.map(link => ({ link: link, clickCount: 0, timestamp: Date.now(), submitter: "community" }));
+  }
+}
+
+function saveLinksToStorage(links) {
+  localStorage.setItem('celoEngageHubLinks', JSON.stringify(links));
+}
+
+let allCommunityLinks = loadLinksFromStorage();
+
+function getPlatformName(url) {
+  if (url.includes('x.com') || url.includes('twitter.com')) return '🐦 X';
+  if (url.includes('farcaster.xyz') || url.includes('warpcast.com')) return '🔮 Farcaster';
+  if (url.includes('github.com')) return '💻 GitHub';
+  if (url.includes('youtube.com')) return '📺 YouTube';
+  if (url.includes('discord.com')) return '💬 Discord';
+  return '🌐 Website';
+}
 
 export function displaySupportLinks() {
-  communityLinks = loadLinksFromStorage();
-
-  const container = document.getElementById("linksContainer");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  // Only show links with less than 5 supports
-  const visibleLinks = communityLinks.filter((link) => link.clickCount < 5);
-
-  if (visibleLinks.length === 0) {
+  const container = document.getElementById('linksContainer');
+  container.innerHTML = '';
+  const activeLinks = allCommunityLinks.filter(linkData => linkData.clickCount < 5);
+  if (activeLinks.length === 0) {
     container.innerHTML = `
-      <div class="link-card">
-        <p>🌟 All links have reached their support goal.</p>
+      <div style="grid-column: 1 / -1;">
+        <div class="link-card">
+          <p>🌟 All links have reached maximum support! Submit new links to continue.</p>
+        </div>
       </div>`;
     return;
   }
-
-  visibleLinks.forEach((item) => {
-    const linkCard = document.createElement("div");
-    linkCard.className = "link-card";
+  activeLinks.sort((a, b) => a.clickCount - b.clickCount);
+  activeLinks.forEach((linkData, index) => {
+    const platform = getPlatformName(linkData.link);
+    const linkCard = document.createElement('div');
+    let openStep2 = 'true';
+    if (linkData.link === "https://tebberen.github.io/celo-engage-hub/") openStep2 = 'false';
     linkCard.innerHTML = `
-      <div>
-        <a href="${item.url}" target="_blank" class="support-link" onclick="handleCommunityLink('${item.url}')">
-          ${item.url}
-        </a>
-      </div>
-      <div class="link-stats">
-        <div class="stat-item">
-          <div>Supports</div>
-          <div class="stat-value">${item.clickCount}/5</div>
+      <div class="link-card">
+        <div>
+          <div class="link-platform">${platform}</div>
+          <a href="${linkData.link}" target="_blank" class="support-link" onclick="handleCommunityLink('${linkData.link}', ${openStep2})">
+            ${linkData.link}
+          </a>
         </div>
-      </div>
-    `;
+        <div class="link-stats">
+          <div class="stat-item">
+            <div>Supports</div>
+            <div class="stat-value">${linkData.clickCount}/5</div>
+          </div>
+        </div>
+      </div>`;
     container.appendChild(linkCard);
   });
-
-  updateSupportStats();
 }
 
-// Update sidebar stats
-function updateSupportStats() {
-  const totalSupports = communityLinks.reduce(
-    (sum, l) => sum + (l.clickCount || 0),
-    0
-  );
-  const totalSupportsEl = document.getElementById("totalSupports");
-  if (totalSupportsEl) totalSupportsEl.textContent = String(totalSupports);
-}
-
-// Handle link click
-function handleCommunityLink(url) {
-  const index = communityLinks.findIndex((l) => l.url === url);
-  if (index >= 0) {
-    communityLinks[index].clickCount = (communityLinks[index].clickCount || 0) + 1;
-    if (communityLinks[index].clickCount > 5)
-      communityLinks[index].clickCount = 5;
-    saveLinksToStorage(communityLinks);
+// 🔹 Link tıklama işlemi
+window.handleCommunityLink = function (linkUrl, openStep2) {
+  window.open(linkUrl, '_blank');
+  if (openStep2) {
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
   }
+};
 
-  // Show "Add Link" section after the first click
-  localStorage.setItem("hasSupported", "true");
-  showAddLinkSection();
+// 🔹 GM, Deploy, Governance butonları
+document.getElementById("gmButton").addEventListener("click", () => alert("🌞 GM, Celo Builder! Keep shining."));
+document.getElementById("deployButton").addEventListener("click", () => alert("🚀 Deployment feature coming soon!"));
+document.getElementById("governanceButton").addEventListener("click", () => alert("🏛️ Governance dashboard under development."));
 
-  // Refresh visible links
+// 🔹 Sayfa yüklenince linkleri göster
+window.addEventListener('load', () => {
   displaySupportLinks();
-}
-window.handleCommunityLink = handleCommunityLink;
+});
 
-function showAddLinkSection() {
-  const addLinkSection = document.getElementById("addLinkSection");
-  if (!addLinkSection) return;
+// 🔹 Wallet eventleri
+document.getElementById("connectWalletBtn").addEventListener("click", async () => {
+  const { connected, _provider, _signer, _address } = await connectWalletMetaMask();
+  if (connected) {
+    provider = _provider;
+    signer = _signer;
+    userAddress = _address;
+    isConnected = true;
+    displaySupportLinks();
+    loadUserProfile(provider, signer, userAddress);
+  }
+});
 
-  const hasSupported = localStorage.getItem("hasSupported") === "true";
-  if (hasSupported) addLinkSection.classList.remove("hidden");
-  else addLinkSection.classList.add("hidden");
-}
-
-export function initAddLinkUI() {
-  const submitBtn = document.getElementById("submitLinkBtn");
-  const input = document.getElementById("newLinkUrl");
-  const hint = document.getElementById("addLinkHint");
-
-  if (!submitBtn || !input) return;
-
-  submitBtn.addEventListener("click", async () => {
-    const url = String(input.value || "").trim();
-    if (!/^https?:\/\//i.test(url)) {
-      alert("Please enter a valid URL (https://...)");
-      return;
-    }
-
-    try {
-      submitBtn.disabled = true;
-      hint.textContent = "⏳ Sending transaction to Celo network...";
-
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-
-      const txHash = await submitLinkOnChain(provider, signer, url);
-
-      hint.textContent = `✅ Transaction confirmed: ${txHash.slice(0, 10)}...`;
-
-      communityLinks.unshift({
-        url,
-        clickCount: 0,
-        createdAt: Date.now(),
-      });
-
-      saveLinksToStorage(communityLinks);
-      input.value = "";
-      displaySupportLinks();
-    } catch (err) {
-      console.error(err);
-      alert("Transaction failed or was rejected.");
-      hint.textContent = "";
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-
-  showAddLinkSection();
-}
+document.getElementById("disconnectWalletBtn").addEventListener("click", disconnectWallet);
+document.getElementById("setupProfileBtn").addEventListener("click", () => setupUserProfile(provider, signer, userAddress));
+document.getElementById("createProposalBtn").addEventListener("click", () => createProposal(provider, signer));
