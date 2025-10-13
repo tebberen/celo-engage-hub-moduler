@@ -1,15 +1,15 @@
-// /src/services/walletService.js
-import { ethers } from 'ethers';
-import { CELO_MAINNET_PARAMS } from "../utils/constants.js";
+import { CELO_MAINNET_PARAMS, CELO_ALFAJORES_PARAMS } from "../utils/constants.js";
 
+// 🔹 MetaMask kurulu mu kontrol et
 export function checkMetaMask() {
   if (typeof window.ethereum === 'undefined') {
-    alert("⚠️ MetaMask bulunamadı. Lütfen yükleyin.");
+    alert("⚠️ MetaMask not detected. Please install MetaMask first.");
     return false;
   }
   return true;
 }
 
+// 🔹 Celo ağına geçiş
 export async function switchToCeloNetwork() {
   try {
     await window.ethereum.request({
@@ -25,12 +25,13 @@ export async function switchToCeloNetwork() {
       });
       return true;
     }
-    console.error("Celo ağına geçiş hatası:", switchError);
-    alert("⚠️ Lütfen MetaMask üzerinden Celo Mainnet'e geçiniz.");
+    console.error("Error switching to Celo network:", switchError);
+    alert("⚠️ Please manually switch to Celo Mainnet from MetaMask.");
     return false;
   }
 }
 
+// 🔹 MetaMask bağlantısı kur
 export async function connectWalletMetaMask() {
   if (!checkMetaMask()) return { connected: false };
   try {
@@ -40,47 +41,47 @@ export async function connectWalletMetaMask() {
     const signer = provider.getSigner();
     const address = await signer.getAddress();
 
-    const wa = document.getElementById('walletAddress');
-    const wi = document.getElementById('walletInfo');
-    const btn = document.getElementById('connectWalletBtn');
-
-    if (wa) wa.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-    wi?.classList.remove('hidden');
-    if (btn) btn.style.display = 'none';
+    document.getElementById('walletAddress').textContent = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    document.getElementById('walletInfo').classList.remove('hidden');
+    document.getElementById('connectWalletBtn').style.display = 'none';
 
     return { connected: true, _provider: provider, _signer: signer, _address: address };
   } catch (error) {
-    console.error("Bağlantı hatası:", error);
-    alert("MetaMask bağlantısı başarısız.");
+    console.error("❌ Connection error:", error);
+    alert("MetaMask connection failed. Please try again.");
     return { connected: false };
   }
 }
 
+// 🔹 Cüzdan bağlantısını kes
 export function disconnectWallet() {
-  document.getElementById('walletInfo')?.classList.add('hidden');
-  const btn = document.getElementById('connectWalletBtn');
-  if (btn) btn.style.display = 'inline-block';
-  alert("🔌 Cüzdan bağlantısı kesildi.");
+  document.getElementById('walletInfo').classList.add('hidden');
+  document.getElementById('connectWalletBtn').style.display = 'inline-block';
+  alert("🔌 Wallet disconnected.");
 }
 
+// 🔹 Geçerli ağ kontrolü
 export async function checkCurrentNetwork(provider) {
   try {
     const network = await provider.getNetwork();
-    const chainId = String(network.chainId);
+    const chainId = network.chainId.toString();
     const networkInfo = document.getElementById('networkInfo');
 
     if (chainId === "42220") {
-      if (networkInfo) { networkInfo.innerHTML = "🟢 Celo Mainnet"; networkInfo.style.color = "#35D07F"; }
+      networkInfo.innerHTML = "🟢 Celo Mainnet";
+      networkInfo.style.color = "#35D07F";
       return true;
     } else if (chainId === "44787") {
-      if (networkInfo) { networkInfo.innerHTML = "🟡 Celo Alfajores Testnet"; networkInfo.style.color = "#FBCC5C"; }
+      networkInfo.innerHTML = "🟡 Celo Alfajores Testnet";
+      networkInfo.style.color = "#FBCC5C";
       return true;
     } else {
-      if (networkInfo) { networkInfo.innerHTML = "🔴 Yanlış Ağ – Celo'ya geçin"; networkInfo.style.color = "#EF4444"; }
+      networkInfo.innerHTML = "🔴 Wrong Network – Switch to Celo";
+      networkInfo.style.color = "#EF4444";
       return false;
     }
   } catch (error) {
-    console.error("Ağ kontrol hatası:", error);
+    console.error("Network check error:", error);
     return false;
   }
 }
