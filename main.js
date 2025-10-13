@@ -120,3 +120,46 @@ document.getElementById("connectWalletBtn").addEventListener("click", async () =
 document.getElementById("disconnectWalletBtn").addEventListener("click", disconnectWallet);
 document.getElementById("setupProfileBtn").addEventListener("click", () => setupUserProfile(provider, signer, userAddress));
 document.getElementById("createProposalBtn").addEventListener("click", () => createProposal(provider, signer));
+import { submitSupportLink } from "./src/services/contractService.js";
+
+// 🔹 Submit Link tıklanınca
+window.addEventListener("DOMContentLoaded", () => {
+  const submitBtn = document.getElementById("submitLinkBtn");
+  if (!submitBtn) return;
+
+  submitBtn.addEventListener("click", async () => {
+    const linkInput = document.getElementById("userLink");
+    if (!linkInput || !linkInput.value.trim()) {
+      alert("Please enter a valid link first!");
+      return;
+    }
+
+    const linkUrl = linkInput.value.trim();
+
+    if (!window.ethereum) {
+      alert("⚠️ Please connect MetaMask first!");
+      return;
+    }
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
+    const success = await submitSupportLink(provider, signer, linkUrl);
+
+    if (success) {
+      // Yeni linki en üste ekle
+      const storedLinks = JSON.parse(localStorage.getItem('celoEngageHubLinks')) || [];
+      storedLinks.unshift({
+        link: linkUrl,
+        clickCount: 0,
+        timestamp: Date.now(),
+        submitter: "user"
+      });
+      localStorage.setItem('celoEngageHubLinks', JSON.stringify(storedLinks));
+
+      // Ana sayfayı güncelle
+      displaySupportLinks();
+      linkInput.value = "";
+    }
+  });
+});
