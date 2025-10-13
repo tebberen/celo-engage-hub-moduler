@@ -1,95 +1,165 @@
-import { ethers } from "ethers";
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./walletService.js";
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../utils/constants.js";
 
-// 🔹 Kullanıcı profilini yükleme
+// Kontrat nesnesi oluştur
+function getContract(providerOrSigner) {
+  return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, providerOrSigner);
+}
+
+// 🔹 Kullanıcı profilini yükle
 export async function loadUserProfile(provider, signer, userAddress) {
   try {
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const contract = getContract(provider);
     const profile = await contract.getUserProfile(userAddress);
 
-    return {
+    const userProfile = {
       username: profile[0],
-      supportCount: profile[1],
-      reputation: profile[2],
-      badgeCount: profile[3],
+      supportCount: profile[1].toString(),
+      reputation: profile[2].toString(),
+      badgeCount: profile[3].toString(),
       isActive: profile[4],
-      timestamp: profile[5],
+      timestamp: profile[5].toString()
     };
+
+    console.log("✅ User profile loaded:", userProfile);
+
+    if (userProfile.isActive) {
+      document.getElementById('userProfileSection').classList.add('hidden');
+      document.getElementById('governanceSection').classList.remove('hidden');
+      document.getElementById('badgesSection').classList.remove('hidden');
+      loadUserBadges(provider, userAddress);
+      loadProposals(provider);
+    } else {
+      document.getElementById('userProfileSection').classList.remove('hidden');
+    }
   } catch (error) {
-    console.error("❌ Error loading user profile:", error);
+    console.error("❌ Error loading profile:", error);
   }
 }
 
-// 🔹 Governance: Tüm proposalları (aktif + geçmiş) listele
-export async function loadProposals(provider) {
+// 🔹 Kullanıcı profili oluştur / güncelle
+export async function setupUserProfile(provider, signer, userAddress) {
   try {
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-    const totalCount = await contract.proposalCount();
-    const container = document.getElementById("proposalsContainer");
-    container.innerHTML = "";
+    const contract = getContract(provider);
+    const userProfile = await contract.getUserProfile(userAddress);
+    const username = document.getElementById("userUsername").value.trim();
 
-    if (totalCount.toNumber() === 0) {
-      container.innerHTML = "<p>No proposals found yet.</p>";
+    if (!username) {
+      alert("Please enter a username first!");
       return;
     }
 
-    for (let i = totalCount.toNumber(); i >= 1; i--) {
-      const details = await contract.getProposalDetails(i);
-      const proposalCard = document.createElement("div");
-      proposalCard.className = "proposal-card";
+    let tx;
+    if (userProfile.isActive) {
+      tx = await contract.connect(signer).updateProfile(username, { gasLimit: 300000 });
+      alert("🔄 Updating profile...");
+    } else {
+      tx = await contract.connect(signer).registerUser(username, { gasLimit: 500000 });
+      alert("🚀 Registering new profile...");
+    }
 
-      proposalCard.innerHTML = `
+    await tx.wait();
+    alert("✅ Profile setup complete!");
+    loadUserProfile(provider, signer, userAddress);
+  } catch (error) {
+    console.error("❌ Profile setup error:", error);
+    alert("Profile setup failed. Check console for details.");
+  }
+}
+
+// 🔹 Proposal oluştur
+export async function createProposal(provider, signer) {
+  try {
+    const title = document.getElementById("proposalTitle").value.trim();
+    const description = document.getElementById("proposalDescription").value.trim();
+
+    if (!title || !description) {
+      alert("Please enter both title and description");
+      return;
+    }
+
+    const contract = getContract(signer);
+    const duration = 3 * 24 * 60 * 60; // 3 gün
+    const tx = await contract.createProposal(title, description, duration, { gasLimit: 600000 });
+
+    console.log("🔄 Proposal TX sent:", tx.hash);
+    await tx.wait();
+    alert("✅ Proposal created successfully!");
+    loadProposals(provider);
+  } catch (error) {
+    console.error("❌ Proposal creation error:", error);
+    alert("Failed to create proposal.");
+  }
+}
+
+// 🔹 Oy verme
+export async function voteProposal(provider, signer, proposalId, support) {
+  try {
+    const contract = getContract(signer);
+    const tx = await contract.voteProposal(proposalId, support, { gasLimit: 400000 });
+    await tx.wait();
+    alert("✅ Vote submitted successfully!");
+    loadProposals(provider);
+  } catch (error) {
+    console.error("❌ Voting error:", error);
+    alert("Voting failed.");
+  }
+}
+
+// 🔹 Aktif Proposal'ları yükle
+export async function loadProposals(provider) {
+  try {
+    const contract = getContract(provider);
+    const activeProposals = await contract.getActiveProposals();
+    const container = document.getElementById('proposalsContainer');
+    container.innerHTML = '';
+
+    if (activeProposals.length === 0) {
+      container.innerHTML = '<p>No active proposals yet.</p>';
+      return;
+    }
+
+    for (let i = 0; i < activeProposals.length; i++) {
+      const proposalId = activeProposals[i];
+      const details = await contract.getProposalDetails(proposalId);
+
+      const card = document.createElement('div');
+      card.className = 'proposal-card';
+      card.innerHTML = `
         <h4>${details.title}</h4>
         <p>${details.description}</p>
         <div class="link-stats">
-          <div class="stat-item">
-            <div>👍 For</div>
-            <div class="stat-value">${details.votesFor.toString()}</div>
-          </div>
-          <div class="stat-item">
-            <div>👎 Against</div>
-            <div class="stat-value">${details.votesAgainst.toString()}</div>
-          </div>
+          <div class="stat-item"><div>👍 For</div><div class="stat-value">${details.votesFor.toString()}</div></div>
+          <div class="stat-item"><div>👎 Against</div><div class="stat-value">${details.votesAgainst.toString()}</div></div>
         </div>
-        <p><small>🧾 ID: ${details.id} | ${details.executed ? "✅ Executed" : "🕒 Pending"}</small></p>
-        <button class="vote-btn" onclick="voteProposal(${details.id}, true)">👍 Support</button>
-        <button class="vote-btn" onclick="voteProposal(${details.id}, false)">👎 Oppose</button>
-      `;
-      container.appendChild(proposalCard);
+        <button onclick="voteProposal(${proposalId}, true)">👍 Support</button>
+        <button onclick="voteProposal(${proposalId}, false)">👎 Oppose</button>`;
+      container.appendChild(card);
     }
   } catch (error) {
-    console.error("Error loading proposals:", error);
+    console.error("❌ Error loading proposals:", error);
   }
 }
 
-// 🔹 Proposal oluşturma
-export async function createProposal(provider, signer, title, description) {
+// 🔹 Kullanıcı rozetlerini yükle
+export async function loadUserBadges(provider, userAddress) {
   try {
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-    const duration = 3 * 24 * 60 * 60; // 3 gün
-    const tx = await contract.createProposal(title, description, duration, { gasLimit: 600000 });
-    console.log("🔄 TX sent:", tx.hash);
-    await tx.wait();
-    alert("✅ Proposal created successfully!");
-  } catch (error) {
-    console.error("❌ Error creating proposal:", error);
-    alert("⚠️ Failed to create proposal. Check console for details.");
-  }
-}
+    const contract = getContract(provider);
+    const badges = await contract.getUserBadges(userAddress);
+    const container = document.getElementById('userBadgesContainer');
+    container.innerHTML = '';
 
-// 🔹 Oy verme (Support / Oppose)
-export async function voteProposal(id, support) {
-  try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    if (badges.length === 0) {
+      container.innerHTML = '<p>No badges yet. Be active to earn badges!</p>';
+      return;
+    }
 
-    const tx = await contract.voteProposal(id, support, { gasLimit: 400000 });
-    console.log("🔄 Vote TX:", tx.hash);
-    await tx.wait();
-    alert("✅ Vote submitted successfully!");
+    badges.forEach(badge => {
+      const badgeCard = document.createElement('div');
+      badgeCard.className = 'badge-card';
+      badgeCard.innerHTML = `<strong>${badge}</strong><p>Earned through community participation</p>`;
+      container.appendChild(badgeCard);
+    });
   } catch (error) {
-    console.error("❌ Voting error:", error);
-    alert("⚠️ Voting failed! Check console for details.");
+    console.error("❌ Error loading badges:", error);
   }
 }
