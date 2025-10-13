@@ -1,3 +1,4 @@
+import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
 import { CELO_MAINNET_PARAMS, CELO_ALFAJORES_PARAMS } from "../utils/constants.js";
 
 // 🔹 MetaMask kurulu mu kontrol et
