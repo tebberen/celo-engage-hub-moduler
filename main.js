@@ -52,6 +52,8 @@ function getPlatformName(url) {
 // ✅ Linkleri ekrana bas
 export function displaySupportLinks() {
   const container = document.getElementById("linksContainer");
+  if (!container) return;
+
   container.innerHTML = "";
   const activeLinks = allCommunityLinks.filter(l => l.clickCount < 5);
   if (activeLinks.length === 0) {
@@ -84,11 +86,10 @@ export function displaySupportLinks() {
   });
 }
 
-// ✅ Tüm linklerde form açılır, çift sekme olmaz
+// ✅ Her linkte form açılır, çift sekme olmaz
 window.handleCommunityLink = function (url, openStep2 = true, event) {
   if (event) event.stopPropagation();
 
-  // Tüm linklerde form aktif olsun
   const formSection = document.getElementById("newLinkFormSection");
   if (formSection) {
     formSection.classList.remove("hidden");
@@ -96,7 +97,6 @@ window.handleCommunityLink = function (url, openStep2 = true, event) {
     formSection.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  // Tıklanan linkin destek sayısını artır
   try {
     let links = JSON.parse(localStorage.getItem("celoEngageHubLinks")) || [];
     const index = links.findIndex(l => l.link === url);
@@ -109,7 +109,7 @@ window.handleCommunityLink = function (url, openStep2 = true, event) {
   console.log(`🟡 Link clicked: ${url}`);
 };
 
-// ✅ Sayfa yüklendiğinde başlat
+// ✅ Uygulama başlatma
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Celo Engage Hub initializing...");
   allCommunityLinks = loadLinksFromStorage();
@@ -121,13 +121,21 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (connectBtn) {
     connectBtn.addEventListener("click", async () => {
-      const result = await connectWalletMetaMask();
-      if (result.connected) {
-        provider = result._provider;
-        signer = result._signer;
-        userAddress = result._address;
-        await checkCurrentNetwork(provider);
-        await loadUserProfile(provider, signer, userAddress);
+      try {
+        const result = await connectWalletMetaMask();
+        if (result.connected) {
+          provider = result._provider;
+          signer = result._signer;
+          userAddress = result._address;
+          await checkCurrentNetwork(provider);
+          await loadUserProfile(provider, signer, userAddress);
+          console.log("✅ Wallet connected successfully!");
+        } else {
+          console.log("⚠️ Wallet connection failed");
+        }
+      } catch (err) {
+        console.error("❌ Wallet connect error:", err);
+        alert("MetaMask connection failed. Please try again.");
       }
     });
   }
@@ -140,7 +148,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   console.log("✅ Celo Engage Hub ready!");
 });
-// ✅ Kullanıcı yeni link ekleyebilsin
+
+// ✅ Yeni Link Ekleme (Form)
 window.addEventListener("DOMContentLoaded", () => {
   const submitBtn = document.getElementById("submitLinkBtn");
   const input = document.getElementById("userLinkInput");
@@ -153,7 +162,6 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Yeni linki listeye ekle
       allCommunityLinks.push({
         link: newLink,
         clickCount: 0,
@@ -164,7 +172,6 @@ window.addEventListener("DOMContentLoaded", () => {
       saveLinksToStorage(allCommunityLinks);
       displaySupportLinks();
 
-      // Formu sıfırla ve gizle
       input.value = "";
       document.getElementById("newLinkFormSection").classList.add("hidden");
 
