@@ -1,29 +1,116 @@
-🌐 Celo Engage Hub
-Social TX - Where Every Interaction Builds Real Value
-If you want support, support first
-🌞 GM
-🚀 Deploy
-🏛️ Governance
-🔗 Connect Wallet
-🟡 Celo Ecosystem
-🌐
-Celo Official
-📚
-Celo Documentation
-💼
-Developer Portal
-🔍
-Celo Explorer
-💬
-Celo Forum
-🐦
-Celo Twitter
-💬
-Celo Discord
-📰
-Celo Blog
-💻
-Celo GitHub 
-1 Support Community Members
-📋 Support Others First
-To submit your link, you must first support at least one community member
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Celo Engage Hub</title>
+  <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body>
+  <div class="centered-content">
+    <header>
+      <div>🌐 Celo Engage Hub</div>
+    </header>
+    <div class="slogan">Social TX - Where Every Interaction Builds Real Value</div>
+    <div class="subheader">If you want support, support first</div>
+    <button id="connectWalletBtn" class="connect-btn">🔗 Connect Wallet</button>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <div id="walletInfo" class="wallet-address hidden">
+        ✅ Connected: <span id="walletAddress"></span>
+        <div id="networkInfo" style="font-size: 12px; margin-top: 5px;"></div>
+        <button id="disconnectWalletBtn" class="disconnect-btn">Disconnect</button>
+      </div>
+
+      <div class="celo-ecosystem">
+        <h3>🟡 Celo Ecosystem</h3>
+        <a href="https://celo.org" target="_blank" class="celo-link"><span class="celo-link-icon">🌐</span>Celo Official</a>
+        <a href="https://docs.celo.org" target="_blank" class="celo-link"><span class="celo-link-icon">📚</span>Celo Documentation</a>
+        <a href="https://developers.celo.org" target="_blank" class="celo-link"><span class="celo-link-icon">💼</span>Developer Portal</a>
+        <a href="https://celoscan.io" target="_blank" class="celo-link"><span class="celo-link-icon">🔍</span>Celo Explorer</a>
+        <a href="https://forum.celo.org" target="_blank" class="celo-link"><span class="celo-link-icon">💬</span>Celo Forum</a>
+        <a href="https://x.com/Celo" target="_blank" class="celo-link"><span class="celo-link-icon">🐦</span>Celo Twitter</a>
+        <a href="https://chat.celo.org" target="_blank" class="celo-link"><span class="celo-link-icon">💬</span>Celo Discord</a>
+        <a href="https://blog.celo.org" target="_blank" class="celo-link"><span class="celo-link-icon">📰</span>Celo Blog</a>
+        <a href="https://github.com/celo-org" target="_blank" class="celo-link"><span class="celo-link-icon">💻</span>Celo GitHub</a>
+      </div>
+
+      <div id="platformStats" class="stats-container hidden">
+        <div class="stat-card"><div>👥 Total Users</div><div class="stat-value" id="totalUsers">0</div></div>
+        <div class="stat-card"><div>📋 Proposals</div><div class="stat-value" id="totalProposals">0</div></div>
+        <div class="stat-card"><div>🎖️ Badges</div><div class="stat-value" id="totalBadges">0</div></div>
+        <div class="stat-card"><div>👍 Supports</div><div class="stat-value" id="totalSupports">0</div></div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="content-layout">
+        <div id="userProfileSection" class="hidden">
+          <div class="step-indicator"><span class="step-number">👤</span> Your Profile</div>
+          <div class="submit-form">
+            <h3>🆔 Setup Your Profile</h3>
+            <input type="text" placeholder="Enter your username..." id="userUsername" />
+            <div class="gas-info">⛽ Setup your profile to unlock all features</div>
+            <button id="setupProfileBtn">🚀 Setup Profile</button>
+          </div>
+        </div>
+
+        <div id="step2" class="submit-section hidden">
+          <div class="step-indicator"><span class="step-number">2</span> Submit Your Link</div>
+          <div class="success-message">✅ Thank you for supporting! Now you can submit your own link</div>
+          <div id="networkWarning" class="network-warning hidden">⚠️ Please switch to Celo Mainnet to submit your link</div>
+          <div class="submit-form">
+            <h3>🎉 Add Your Content</h3>
+            <input type="text" placeholder="Paste your X, Farcaster, GitHub, or any other link here..." id="userLinkInput" />
+            <div class="gas-info">⛽ You'll only pay the normal network gas fee (no extra cost)</div>
+            <button id="submitLinkBtn">✍️ Submit Link</button>
+          </div>
+        </div>
+
+        <div id="step1" class="support-section">
+          <div class="step-indicator"><span class="step-number">1</span> Support Community Members</div>
+          <div class="step-container">
+            <h3>📋 Support Others First</h3>
+            <p>To submit your link, you must first support at least one community member</p>
+            <div class="links-grid" id="linksContainer"></div>
+          </div>
+        </div>
+
+        <div id="governanceSection" class="governance-section hidden">
+          <div class="step-indicator"><span class="step-number">🏛️</span> Community Governance</div>
+          <div class="step-container">
+            <h3>🗳️ Create Proposal</h3>
+            <input type="text" placeholder="Proposal title..." id="proposalTitle" />
+            <textarea placeholder="Proposal description..." id="proposalDescription" rows="3"></textarea>
+            <button id="createProposalBtn">📝 Create Proposal</button>
+            <h3 style="margin-top: 30px;">📋 Active Proposals</h3>
+            <div id="proposalsContainer"></div>
+          </div>
+        </div>
+
+        <div id="badgesSection" class="badge-section hidden">
+          <div class="step-indicator"><span class="step-number">🎖️</span> Your Badges</div>
+          <div class="step-container">
+            <h3>🏆 Your Achievements</h3>
+            <div id="userBadgesContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yeni eklenen butonlar -->
+  <div style="margin-top: 30px; text-align: center;">
+    <button id="gmButton">🌞 GM</button>
+    <button id="deployButton">🚀 Deploy</button>
+    <button id="governanceButton">🏛️ Governance</button>
+  </div>
+
+  <!-- Ethers -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <!-- Modüler JS bağlantısı -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
