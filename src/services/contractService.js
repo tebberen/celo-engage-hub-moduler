@@ -163,3 +163,19 @@ export async function loadUserBadges(provider, userAddress) {
     console.error("❌ Error loading badges:", error);
   }
 }
+// 🔹 Support link gönderimi
+export async function submitSupportLink(provider, signer, linkUrl) {
+  try {
+    const contract = getContract(signer);
+    const tx = await contract.addSupportLink(linkUrl, { gasLimit: 500000 });
+    console.log("🔄 Transaction sent:", tx.hash);
+    alert("🦊 MetaMask opened. Please confirm the transaction...");
+    await tx.wait();
+    alert("✅ Link successfully submitted to blockchain!");
+    return true;
+  } catch (error) {
+    console.error("❌ submitSupportLink error:", error);
+    alert("Transaction failed. Please check the console for details.");
+    return false;
+  }
+}
