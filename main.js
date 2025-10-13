@@ -140,3 +140,35 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   console.log("✅ Celo Engage Hub ready!");
 });
+// ✅ Kullanıcı yeni link ekleyebilsin
+window.addEventListener("DOMContentLoaded", () => {
+  const submitBtn = document.getElementById("submitLinkBtn");
+  const input = document.getElementById("userLinkInput");
+
+  if (submitBtn) {
+    submitBtn.addEventListener("click", () => {
+      const newLink = input.value.trim();
+      if (!newLink) {
+        alert("Please enter a valid link first!");
+        return;
+      }
+
+      // Yeni linki listeye ekle
+      allCommunityLinks.push({
+        link: newLink,
+        clickCount: 0,
+        timestamp: Date.now(),
+        submitter: "user"
+      });
+
+      saveLinksToStorage(allCommunityLinks);
+      displaySupportLinks();
+
+      // Formu sıfırla ve gizle
+      input.value = "";
+      document.getElementById("newLinkFormSection").classList.add("hidden");
+
+      alert("✅ Your link has been added successfully!");
+    });
+  }
+});
