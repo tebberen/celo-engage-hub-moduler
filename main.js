@@ -70,7 +70,7 @@ export function displaySupportLinks() {
     linkCard.innerHTML = `
       <div>
         <div class="link-platform">${platform}</div>
-        <a href="${linkData.link}" target="_blank" class="support-link" onclick="handleCommunityLink('${linkData.link}', ${openStep2})">
+        <a href="${linkData.link}" target="_blank" class="support-link" onclick="handleCommunityLink('${linkData.link}', ${openStep2}, event)">
           ${linkData.link}
         </a>
       </div>
@@ -84,17 +84,32 @@ export function displaySupportLinks() {
   });
 }
 
-// ✅ Tek sekme açılır, form görünür hale gelir
-window.handleCommunityLink = function (url, openStep2 = true) {
-  if (!openStep2) return;
+// ✅ Tüm linklerde form açılır, çift sekme olmaz
+window.handleCommunityLink = function (url, openStep2 = true, event) {
+  if (event) event.stopPropagation();
+
+  // Tüm linklerde form aktif olsun
   const formSection = document.getElementById("newLinkFormSection");
   if (formSection) {
     formSection.classList.remove("hidden");
-    formSection.scrollIntoView({ behavior: "smooth" });
+    formSection.style.display = "block";
+    formSection.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  // Tıklanan linkin destek sayısını artır
+  try {
+    let links = JSON.parse(localStorage.getItem("celoEngageHubLinks")) || [];
+    const index = links.findIndex(l => l.link === url);
+    if (index !== -1) {
+      links[index].clickCount = (links[index].clickCount || 0) + 1;
+      localStorage.setItem("celoEngageHubLinks", JSON.stringify(links));
+    }
+  } catch (_) {}
+
+  console.log(`🟡 Link clicked: ${url}`);
 };
 
-// ✅ Sayfa yüklendiğinde her şeyi başlat
+// ✅ Sayfa yüklendiğinde başlat
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Celo Engage Hub initializing...");
   allCommunityLinks = loadLinksFromStorage();
