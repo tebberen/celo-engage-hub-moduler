@@ -20,26 +20,23 @@ const initialSupportLinks = [
   "https://github.com/tebberen"
 ];
 
-// ✅ Local storage’tan linkleri yükle
+// ✅ Local Storage yönetimi
 function loadLinksFromStorage() {
   const stored = localStorage.getItem("celoEngageHubLinks");
-  if (stored) {
-    return JSON.parse(stored);
-  } else {
-    return initialSupportLinks.map(link => ({
-      link,
-      clickCount: 0,
-      timestamp: Date.now(),
-      submitter: "community"
-    }));
-  }
+  if (stored) return JSON.parse(stored);
+  return initialSupportLinks.map(link => ({
+    link,
+    clickCount: 0,
+    timestamp: Date.now(),
+    submitter: "community"
+  }));
 }
 
 function saveLinksToStorage(links) {
   localStorage.setItem("celoEngageHubLinks", JSON.stringify(links));
 }
 
-// ✅ Platform simgeleri
+// ✅ Platform adı
 function getPlatformName(url) {
   if (url.includes("x.com") || url.includes("twitter.com")) return "🐦 X";
   if (url.includes("farcaster.xyz") || url.includes("warpcast.com")) return "🔮 Farcaster";
@@ -49,13 +46,14 @@ function getPlatformName(url) {
   return "🌐 Website";
 }
 
-// ✅ Linkleri ekrana bas
-export function displaySupportLinks() {
+// ✅ Linkleri listele
+function displaySupportLinks() {
   const container = document.getElementById("linksContainer");
   if (!container) return;
 
   container.innerHTML = "";
   const activeLinks = allCommunityLinks.filter(l => l.clickCount < 5);
+
   if (activeLinks.length === 0) {
     container.innerHTML = `
       <div class="link-card">
@@ -68,6 +66,7 @@ export function displaySupportLinks() {
     const platform = getPlatformName(linkData.link);
     const linkCard = document.createElement("div");
     linkCard.classList.add("link-card");
+
     const openStep2 = linkData.link !== "https://tebberen.github.io/celo-engage-hub/";
     linkCard.innerHTML = `
       <div>
@@ -86,7 +85,7 @@ export function displaySupportLinks() {
   });
 }
 
-// ✅ Her linkte form açılır, çift sekme olmaz
+// ✅ Link tıklama
 window.handleCommunityLink = function (url, openStep2 = true, event) {
   if (event) event.stopPropagation();
 
@@ -94,7 +93,7 @@ window.handleCommunityLink = function (url, openStep2 = true, event) {
   if (formSection) {
     formSection.classList.remove("hidden");
     formSection.style.display = "block";
-    formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    formSection.scrollIntoView({ behavior: "smooth" });
   }
 
   try {
@@ -115,50 +114,52 @@ window.addEventListener("DOMContentLoaded", async () => {
   allCommunityLinks = loadLinksFromStorage();
   displaySupportLinks();
 
-  // Cüzdan bağlantı butonları
   const connectBtn = document.getElementById("connectWalletBtn");
   const disconnectBtn = document.getElementById("disconnectWalletBtn");
+  const submitBtn = document.getElementById("submitLinkBtn");
+  const input = document.getElementById("userLinkInput");
 
+  // 🔹 MetaMask bağlantısı
   if (connectBtn) {
     connectBtn.addEventListener("click", async () => {
       try {
+        console.log("⏳ Connecting to MetaMask...");
         const result = await connectWalletMetaMask();
         if (result.connected) {
           provider = result._provider;
           signer = result._signer;
           userAddress = result._address;
+
           await checkCurrentNetwork(provider);
           await loadUserProfile(provider, signer, userAddress);
-          console.log("✅ Wallet connected successfully!");
+
+          console.log("✅ Wallet connected:", userAddress);
         } else {
-          console.log("⚠️ Wallet connection failed");
+          alert("⚠️ Wallet connection failed.");
         }
       } catch (err) {
-        console.error("❌ Wallet connect error:", err);
-        alert("MetaMask connection failed. Please try again.");
+        console.error("❌ MetaMask connect error:", err);
+        alert("MetaMask not responding. Please check your wallet and try again.");
       }
     });
   }
 
+  // 🔹 Wallet bağlantısını kes
   if (disconnectBtn) {
     disconnectBtn.addEventListener("click", () => {
       disconnectWallet();
+      provider = null;
+      signer = null;
+      userAddress = "";
     });
   }
 
-  console.log("✅ Celo Engage Hub ready!");
-});
-
-// ✅ Yeni Link Ekleme (Form)
-window.addEventListener("DOMContentLoaded", () => {
-  const submitBtn = document.getElementById("submitLinkBtn");
-  const input = document.getElementById("userLinkInput");
-
+  // 🔹 Yeni link ekleme
   if (submitBtn) {
     submitBtn.addEventListener("click", () => {
       const newLink = input.value.trim();
       if (!newLink) {
-        alert("Please enter a valid link first!");
+        alert("Please enter a valid link!");
         return;
       }
 
@@ -171,11 +172,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
       saveLinksToStorage(allCommunityLinks);
       displaySupportLinks();
-
       input.value = "";
       document.getElementById("newLinkFormSection").classList.add("hidden");
-
       alert("✅ Your link has been added successfully!");
     });
   }
+
+  console.log("✅ Celo Engage Hub ready!");
 });
