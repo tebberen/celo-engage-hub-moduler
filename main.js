@@ -4,12 +4,10 @@ import { loadUserProfile, setupUserProfile, createProposal, voteProposal, loadPr
 
 let provider = null;
 let signer = null;
-let isConnected = false;
-let userAddress = '';
-let hasSupported = false;
-let currentChainId = null;
-let userProfile = null;
+let userAddress = "";
+let allCommunityLinks = [];
 
+// ✅ Başlangıç linkleri
 const initialSupportLinks = [
   "https://farcaster.xyz/teberen/0x391c5713",
   "https://farcaster.xyz/ertu",
@@ -22,77 +20,108 @@ const initialSupportLinks = [
   "https://github.com/tebberen"
 ];
 
-// 🔹 Link depolama
+// ✅ Local storage’tan linkleri yükle
 function loadLinksFromStorage() {
-  const storedLinks = localStorage.getItem('celoEngageHubLinks');
-  if (storedLinks) {
-    return JSON.parse(storedLinks);
+  const stored = localStorage.getItem("celoEngageHubLinks");
+  if (stored) {
+    return JSON.parse(stored);
   } else {
-    return initialSupportLinks.map(link => ({ link: link, clickCount: 0, timestamp: Date.now(), submitter: "community" }));
+    return initialSupportLinks.map(link => ({
+      link,
+      clickCount: 0,
+      timestamp: Date.now(),
+      submitter: "community"
+    }));
   }
 }
 
 function saveLinksToStorage(links) {
-  localStorage.setItem('celoEngageHubLinks', JSON.stringify(links));
+  localStorage.setItem("celoEngageHubLinks", JSON.stringify(links));
 }
 
-let allCommunityLinks = loadLinksFromStorage();
-
+// ✅ Platform simgeleri
 function getPlatformName(url) {
-  if (url.includes('x.com') || url.includes('twitter.com')) return '🐦 X';
-  if (url.includes('farcaster.xyz') || url.includes('warpcast.com')) return '🔮 Farcaster';
-  if (url.includes('github.com')) return '💻 GitHub';
-  if (url.includes('youtube.com')) return '📺 YouTube';
-  if (url.includes('discord.com')) return '💬 Discord';
-  return '🌐 Website';
+  if (url.includes("x.com") || url.includes("twitter.com")) return "🐦 X";
+  if (url.includes("farcaster.xyz") || url.includes("warpcast.com")) return "🔮 Farcaster";
+  if (url.includes("github.com")) return "💻 GitHub";
+  if (url.includes("youtube.com")) return "📺 YouTube";
+  if (url.includes("discord.com")) return "💬 Discord";
+  return "🌐 Website";
 }
 
-// ✅ Artık çift sekme açılmaz: window.open kaldırıldı
-window.handleCommunityLink = function (url, openStep2 = true) {
-  if (!openStep2) return; // bazı linklerde form açılmasın istiyorsan
-  const formSection = document.getElementById('newLinkFormSection');
-  if (formSection) {
-    formSection.classList.remove('hidden');
-    try {
-      formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch (_) {}
-  }
-};
-
+// ✅ Linkleri ekrana bas
 export function displaySupportLinks() {
-  const container = document.getElementById('linksContainer');
-  container.innerHTML = '';
-  const activeLinks = allCommunityLinks.filter(linkData => linkData.clickCount < 5);
+  const container = document.getElementById("linksContainer");
+  container.innerHTML = "";
+  const activeLinks = allCommunityLinks.filter(l => l.clickCount < 5);
   if (activeLinks.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1;">
-        <div class="link-card">
-          <p>🌟 All links have reached maximum support! Submit new links to continue.</p>
-        </div>
+      <div class="link-card">
+        <p>🌟 All links have reached maximum support! Submit new links to continue.</p>
       </div>`;
     return;
   }
-  activeLinks.sort((a, b) => a.clickCount - b.clickCount);
-  activeLinks.forEach((linkData) => {
+
+  activeLinks.forEach(linkData => {
     const platform = getPlatformName(linkData.link);
-    const linkCard = document.createElement('div');
-    let openStep2 = true;
-    if (linkData.link === "https://tebberen.github.io/celo-engage-hub/") openStep2 = false;
+    const linkCard = document.createElement("div");
+    linkCard.classList.add("link-card");
+    const openStep2 = linkData.link !== "https://tebberen.github.io/celo-engage-hub/";
     linkCard.innerHTML = `
-      <div class="link-card">
-        <div>
-          <div class="link-platform">${platform}</div>
-          <a href="${linkData.link}" target="_blank" class="support-link" onclick="handleCommunityLink('${linkData.link}', ${openStep2})">
-            ${linkData.link}
-          </a>
-        </div>
-        <div class="link-stats">
-          <div class="stat-item">
-            <div>Supports</div>
-            <div class="stat-value">${linkData.clickCount}/5</div>
-          </div>
+      <div>
+        <div class="link-platform">${platform}</div>
+        <a href="${linkData.link}" target="_blank" class="support-link" onclick="handleCommunityLink('${linkData.link}', ${openStep2})">
+          ${linkData.link}
+        </a>
+      </div>
+      <div class="link-stats">
+        <div class="stat-item">
+          <div>Supports</div>
+          <div class="stat-value">${linkData.clickCount}/5</div>
         </div>
       </div>`;
     container.appendChild(linkCard);
   });
 }
+
+// ✅ Tek sekme açılır, form görünür hale gelir
+window.handleCommunityLink = function (url, openStep2 = true) {
+  if (!openStep2) return;
+  const formSection = document.getElementById("newLinkFormSection");
+  if (formSection) {
+    formSection.classList.remove("hidden");
+    formSection.scrollIntoView({ behavior: "smooth" });
+  }
+};
+
+// ✅ Sayfa yüklendiğinde her şeyi başlat
+window.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 Celo Engage Hub initializing...");
+  allCommunityLinks = loadLinksFromStorage();
+  displaySupportLinks();
+
+  // Cüzdan bağlantı butonları
+  const connectBtn = document.getElementById("connectWalletBtn");
+  const disconnectBtn = document.getElementById("disconnectWalletBtn");
+
+  if (connectBtn) {
+    connectBtn.addEventListener("click", async () => {
+      const result = await connectWalletMetaMask();
+      if (result.connected) {
+        provider = result._provider;
+        signer = result._signer;
+        userAddress = result._address;
+        await checkCurrentNetwork(provider);
+        await loadUserProfile(provider, signer, userAddress);
+      }
+    });
+  }
+
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener("click", () => {
+      disconnectWallet();
+    });
+  }
+
+  console.log("✅ Celo Engage Hub ready!");
+});
