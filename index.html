@@ -52,27 +52,63 @@
       </div>
     </div>
 
-    <main class="main-content">
-      <section id="linksContainer" class="links-grid"></section>
-    </main>
+    <div class="main-content">
+      <h2>💫 Community Support Links</h2>
+      <div id="linksContainer" class="links-grid"></div>
+
+      <!-- 🌟 Submit Your Link Bölümü (Görseldekiyle birebir) -->
+      <section id="newLinkFormSection" class="hidden" style="margin-top: 50px; text-align: center;">
+        <h2 style="margin-bottom: 10px; font-weight: bold; font-size: 22px;">② Submit Your Link</h2>
+
+        <div style="background-color: #e9f7ef; border: 1.5px solid #28a745; color: #155724; padding: 12px; border-radius: 8px; font-size: 15px; margin-bottom: 25px;">
+          ✅ Thank you for supporting! Now you can submit your own link
+        </div>
+
+        <div style="border: 2px solid #f2c94c; background-color: #fffaf0; padding: 25px 30px; border-radius: 12px; display: inline-block; max-width: 400px; width: 90%; text-align: left; box-shadow: 0px 2px 6px rgba(0,0,0,0.05);">
+          <h3 style="margin-top: 0; color: #333; font-size: 18px; font-weight: 600; margin-bottom: 15px;">🎉 Add Your Content</h3>
+
+          <input
+            id="userLinkInput"
+            type="text"
+            placeholder="Paste your X, Farcaster, GitHub, or any other link here..."
+            style="width: 100%; padding: 12px; border: 1.5px solid #f2c94c; border-radius: 6px; font-size: 14px; margin-bottom: 15px;"
+          />
+
+          <div style="background-color: #fff3cd; border: 1px solid #ffe58f; color: #856404; padding: 10px; border-radius: 6px; font-size: 13px; text-align: center; margin-bottom: 15px;">
+            🪙 You'll only pay the normal network gas fee (no extra cost)
+          </div>
+
+          <button
+            id="submitLinkBtn"
+            style="background-color: #f7ce46; color: #000; padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 15px; box-shadow: 0px 2px 4px rgba(0,0,0,0.1);"
+            onmouseover="this.style.backgroundColor='#ffd84c'"
+            onmouseout="this.style.backgroundColor='#f7ce46'"
+          >
+            ✍️ Submit Link
+          </button>
+
+          <p style="margin-top: 12px; font-size: 13px; color: #444; text-align: center;">
+            🔒 Secure transaction on <strong>Celo network</strong>
+          </p>
+        </div>
+      </section>
+
+      <div id="governanceSection" class="hidden">
+        <h2>🏛️ Governance</h2>
+        <div>
+          <input id="proposalTitle" placeholder="Proposal Title" />
+          <textarea id="proposalDescription" placeholder="Proposal Description"></textarea>
+          <button id="createProposalBtn">Create Proposal</button>
+        </div>
+        <div id="proposalsContainer" class="links-grid"></div>
+      </div>
+
+      <div id="badgesSection" class="hidden">
+        <h2>🎖️ User Badges</h2>
+        <div id="badgesContainer" class="links-grid"></div>
+      </div>
+    </div>
   </div>
-
-  <!-- 🏛️ Governance Section -->
-  <section id="governanceSection" class="hidden">
-    <h2>🏛️ Community Governance</h2>
-    <p>Create proposals, vote, and shape the future of Celo Engage Hub.</p>
-
-    <div style="margin-bottom:20px;">
-      <input id="proposalTitle" placeholder="Proposal Title" />
-      <textarea id="proposalDescription" rows="3" placeholder="Proposal Description"></textarea>
-      <button id="createProposalBtn">🪶 Create Proposal</button>
-    </div>
-
-    <h3>📜 Active Proposals</h3>
-    <div id="proposalsContainer">
-      <p>Loading proposals...</p>
-    </div>
-  </section>
 
   <script type="module" src="./main.js"></script>
 </body>
