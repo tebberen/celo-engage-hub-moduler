@@ -3,14 +3,10 @@ import { connectWalletMetaMask, disconnectWallet, checkCurrentNetwork } from "./
 import { loadUserProfile } from "./src/services/contractService.js";
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
 
-// 🟢 Governance servisleri
-import { fetchActiveProposals, createProposal, voteProposal } from "./src/services/governanceService.js";
-
 let provider = null;
 let signer = null;
 let userAddress = "";
 let allCommunityLinks = [];
-let governanceInitialized = false; // 🟢 Governance flag
 
 // ✅ Başlangıç linkleri
 const initialSupportLinks = [
@@ -104,142 +100,120 @@ window.handleCommunityLink = function (url, event) {
     let links = JSON.parse(localStorage.getItem("celoEngageHubLinks")) || [];
     const index = links.findIndex(l => l.link === url);
     if (index !== -1) {
-      links[index].clickCount++;
-      saveLinksToStorage(links);
-      displaySupportLinks();
+      links[index].clickCount = (links[index].clickCount || 0) + 1;
+      localStorage.setItem("celoEngageHubLinks", JSON.stringify(links));
     }
-  } catch (error) {
-    console.error("Error updating link:", error);
-  }
+  } catch (_) {}
+
+  console.log(`🟡 Link clicked: ${url}`);
 };
 
-// ✅ Uygulama başlat
+// ✅ Sayfa yüklendiğinde başlat
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Celo Engage Hub initializing...");
-
   allCommunityLinks = loadLinksFromStorage();
   displaySupportLinks();
 
-  // 🔗 Wallet bağlantısı
   const connectBtn = document.getElementById("connectWalletBtn");
+  const disconnectBtn = document.getElementById("disconnectWalletBtn");
+  const submitBtn = document.getElementById("submitLinkBtn");
+  const input = document.getElementById("userLinkInput");
+
+  // 🔹 MetaMask bağlantısı
   if (connectBtn) {
     connectBtn.addEventListener("click", async () => {
-      const result = await connectWalletMetaMask();
-      if (result.connected) {
-        provider = result._provider;
-        signer = result._signer;
-        userAddress = result._address;
+      try {
+        console.log("⏳ Connecting to MetaMask...");
+        const result = await connectWalletMetaMask();
+        if (result.connected) {
+          provider = result._provider;
+          signer = result._signer;
+          userAddress = result._address;
+
+          await checkCurrentNetwork(provider);
+          await loadUserProfile(provider, signer, userAddress);
+
+          console.log("✅ Wallet connected:", userAddress);
+        } else {
+          alert("⚠️ Wallet connection failed.");
+        }
+      } catch (err) {
+        console.error("❌ MetaMask connect error:", err);
+        alert("MetaMask not responding. Please check your wallet and try again.");
       }
     });
   }
 
-  // 🏛️ Governance butonu
-  const governanceBtn = document.getElementById("governanceButton");
-  if (governanceBtn) {
-    governanceBtn.addEventListener("click", async () => {
-      const section = document.getElementById("governanceSection");
-      if (section) section.classList.remove("hidden");
+  // 🔹 Wallet bağlantısını kes
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener("click", () => {
+      disconnectWallet();
+      provider = null;
+      signer = null;
+      userAddress = "";
+    });
+  }
 
-      if (!provider && window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
+  // 🔹 Link gönderme işlemi (on-chain tx)
+  if (submitBtn) {
+    submitBtn.addEventListener("click", async () => {
+      const newLink = input.value.trim();
+      if (!newLink) {
+        alert("Please enter a valid link!");
+        return;
       }
 
-      if (!governanceInitialized) {
-        console.log("🗳️ Loading proposals...");
-        await renderProposals();
-        governanceInitialized = true;
-      } else {
-        await renderProposals();
+      if (!signer) {
+        alert("Please connect your wallet first!");
+        return;
+      }
+
+      try {
+        console.log("🚀 Sending transaction (gas only, no value)...");
+
+        const tx = await signer.sendTransaction({
+          to: userAddress, // sembolik hedef (kendi adresine), ileride kontrata gidebilir
+          value: 0, // hiçbir CELO gönderilmiyor
+          gasLimit: 100000 // düşük gas limiti
+        });
+
+        console.log("⏳ Transaction sent:", tx.hash);
+        alert("Transaction sent! Waiting for confirmation...");
+
+        await tx.wait();
+
+        allCommunityLinks.push({
+          link: newLink,
+          clickCount: 0,
+          timestamp: Date.now(),
+          submitter: userAddress
+        });
+
+        saveLinksToStorage(allCommunityLinks);
+        displaySupportLinks();
+
+        input.value = "";
+        document.getElementById("newLinkFormSection").classList.add("hidden");
+
+        alert("✅ Transaction confirmed! Link successfully added.");
+      } catch (err) {
+        console.error("❌ Transaction failed:", err);
+        alert("Transaction failed or rejected by user.");
       }
     });
   }
 
-  console.log("✅ Celo Engage Hub loaded successfully!");
+  console.log("✅ Celo Engage Hub ready!");
 });
+// ===========================
+// Governance Display Function
+// ===========================
 
-// =======================================
-// 🗳️ Governance render & voting functions
-// =======================================
-async function renderProposals() {
-  const proposalsContainer = document.getElementById("proposalsContainer");
-  if (!proposalsContainer) return;
-
-  proposalsContainer.innerHTML = "Loading proposals...";
-  try {
-    const list = await fetchActiveProposals(provider);
-    if (!list.length) {
-      proposalsContainer.innerHTML = `<p>No active proposals yet.</p>`;
-      return;
-    }
-
-    proposalsContainer.innerHTML = list.map(p => `
-      <div class="proposal-card">
-        <div class="proposal-header">
-          <div class="proposal-title">${p.title}</div>
-          <div class="proposal-sub">${p.description}</div>
-        </div>
-        <div class="proposal-stats">
-          <div class="vote-pill">🟩 For <strong>${p.forVotes}</strong></div>
-          <div class="vote-pill">🟥 Against <strong>${p.againstVotes}</strong></div>
-        </div>
-        <div class="proposal-actions">
-          <button class="support-btn" data-id="${p.id}" data-act="for">Support</button>
-          <button class="oppose-btn" data-id="${p.id}" data-act="against">Oppose</button>
-        </div>
-      </div>
-    `).join("");
-  } catch (e) {
-    console.error(e);
-    proposalsContainer.innerHTML = `<p style="color:red;">Failed to load proposals.</p>`;
-  }
-}
-
-// ✅ Proposal oluşturma
-document.getElementById("createProposalBtn")?.addEventListener("click", async () => {
-  const title = document.getElementById("proposalTitle").value.trim();
-  const desc = document.getElementById("proposalDescription").value.trim();
-  if (!title) return alert("Please enter a proposal title.");
-  try {
-    if (!signer && window.ethereum) {
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      signer = provider.getSigner();
-    }
-    await createProposal(signer, title, desc, 3);
-    document.getElementById("proposalTitle").value = "";
-    document.getElementById("proposalDescription").value = "";
-    await renderProposals();
-    alert("Proposal created successfully ✅");
-  } catch (e) {
-    console.error(e);
-    alert("❌ Failed to create proposal: " + e.message);
-  }
-});
-
-// ✅ Oy kullanma (support/oppose)
-document.getElementById("proposalsContainer")?.addEventListener("click", async (e) => {
-  const t = e.target;
-  if (!(t instanceof HTMLElement)) return;
-  const act = t.getAttribute("data-act");
-  if (!act) return;
-  const id = Number(t.getAttribute("data-id"));
-  try {
-    if (!signer && window.ethereum) {
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      signer = provider.getSigner();
-    }
-    const support = act === "for";
-    await voteProposal(signer, id, support);
-    await renderProposals();
-    alert(support ? "🟩 Supported!" : "🟥 Opposed!");
-  } catch (e2) {
-    console.error(e2);
-    alert("Vote failed: " + e2.message);
-  }
-});
 export function displayGovernanceProposals(proposals) {
   const container = document.getElementById("proposalsContainer");
   if (!container) return;
   container.innerHTML = "";
+
   proposals.forEach((p) => {
     const card = document.createElement("div");
     card.className = "proposal-card";
