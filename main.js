@@ -3,14 +3,14 @@ import { connectWalletMetaMask, disconnectWallet, checkCurrentNetwork } from "./
 import { loadUserProfile } from "./src/services/contractService.js";
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
 
-// 🟢 Yeni eklendi: Governance servisleri
+// 🟢 Governance servisleri
 import { fetchActiveProposals, createProposal, voteProposal } from "./src/services/governanceService.js";
 
 let provider = null;
 let signer = null;
 let userAddress = "";
 let allCommunityLinks = [];
-let governanceInitialized = false; // 🟢 Yeni eklendi
+let governanceInitialized = false; // 🟢 Governance flag
 
 // ✅ Başlangıç linkleri
 const initialSupportLinks = [
@@ -120,7 +120,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   allCommunityLinks = loadLinksFromStorage();
   displaySupportLinks();
 
-  // 🟡 Wallet bağlantısı
+  // 🔗 Wallet bağlantısı
   const connectBtn = document.getElementById("connectWalletBtn");
   if (connectBtn) {
     connectBtn.addEventListener("click", async () => {
@@ -133,7 +133,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // 🟡 Governance butonu
+  // 🏛️ Governance butonu
   const governanceBtn = document.getElementById("governanceButton");
   if (governanceBtn) {
     governanceBtn.addEventListener("click", async () => {
@@ -146,16 +146,93 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       if (!governanceInitialized) {
         console.log("🗳️ Loading proposals...");
-        try {
-          const list = await fetchActiveProposals(provider);
-          console.log("Active Proposals:", list);
-        } catch (err) {
-          console.error("Error fetching proposals:", err);
-        }
+        await renderProposals();
         governanceInitialized = true;
+      } else {
+        await renderProposals();
       }
     });
   }
 
   console.log("✅ Celo Engage Hub loaded successfully!");
+});
+
+// =======================================
+// 🗳️ Governance render & voting functions
+// =======================================
+async function renderProposals() {
+  const proposalsContainer = document.getElementById("proposalsContainer");
+  if (!proposalsContainer) return;
+
+  proposalsContainer.innerHTML = "Loading proposals...";
+  try {
+    const list = await fetchActiveProposals(provider);
+    if (!list.length) {
+      proposalsContainer.innerHTML = `<p>No active proposals yet.</p>`;
+      return;
+    }
+
+    proposalsContainer.innerHTML = list.map(p => `
+      <div class="proposal-card">
+        <div class="proposal-header">
+          <div class="proposal-title">${p.title}</div>
+          <div class="proposal-sub">${p.description}</div>
+        </div>
+        <div class="proposal-stats">
+          <div class="vote-pill">🟩 For <strong>${p.forVotes}</strong></div>
+          <div class="vote-pill">🟥 Against <strong>${p.againstVotes}</strong></div>
+        </div>
+        <div class="proposal-actions">
+          <button class="support-btn" data-id="${p.id}" data-act="for">Support</button>
+          <button class="oppose-btn" data-id="${p.id}" data-act="against">Oppose</button>
+        </div>
+      </div>
+    `).join("");
+  } catch (e) {
+    console.error(e);
+    proposalsContainer.innerHTML = `<p style="color:red;">Failed to load proposals.</p>`;
+  }
+}
+
+// ✅ Proposal oluşturma
+document.getElementById("createProposalBtn")?.addEventListener("click", async () => {
+  const title = document.getElementById("proposalTitle").value.trim();
+  const desc = document.getElementById("proposalDescription").value.trim();
+  if (!title) return alert("Please enter a proposal title.");
+  try {
+    if (!signer && window.ethereum) {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      signer = provider.getSigner();
+    }
+    await createProposal(signer, title, desc, 3);
+    document.getElementById("proposalTitle").value = "";
+    document.getElementById("proposalDescription").value = "";
+    await renderProposals();
+    alert("Proposal created successfully ✅");
+  } catch (e) {
+    console.error(e);
+    alert("❌ Failed to create proposal: " + e.message);
+  }
+});
+
+// ✅ Oy kullanma (support/oppose)
+document.getElementById("proposalsContainer")?.addEventListener("click", async (e) => {
+  const t = e.target;
+  if (!(t instanceof HTMLElement)) return;
+  const act = t.getAttribute("data-act");
+  if (!act) return;
+  const id = Number(t.getAttribute("data-id"));
+  try {
+    if (!signer && window.ethereum) {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      signer = provider.getSigner();
+    }
+    const support = act === "for";
+    await voteProposal(signer, id, support);
+    await renderProposals();
+    alert(support ? "🟩 Supported!" : "🟥 Opposed!");
+  } catch (e2) {
+    console.error(e2);
+    alert("Vote failed: " + e2.message);
+  }
 });
