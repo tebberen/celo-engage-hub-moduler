@@ -1,7 +1,8 @@
+// ✅ Ethers import (çok önemli!)
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../utils/constants.js";
 
-// Kontrat nesnesi oluştur
+// 🔹 Kontrat nesnesi oluştur
 function getContract(providerOrSigner) {
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, providerOrSigner);
 }
@@ -23,14 +24,15 @@ export async function loadUserProfile(provider, signer, userAddress) {
 
     console.log("✅ User profile loaded:", userProfile);
 
+    // UI güncellemesi
     if (userProfile.isActive) {
-      document.getElementById('userProfileSection').classList.add('hidden');
-      document.getElementById('governanceSection').classList.remove('hidden');
-      document.getElementById('badgesSection').classList.remove('hidden');
+      document.getElementById('userProfileSection')?.classList.add('hidden');
+      document.getElementById('governanceSection')?.classList.remove('hidden');
+      document.getElementById('badgesSection')?.classList.remove('hidden');
       loadUserBadges(provider, userAddress);
       loadProposals(provider);
     } else {
-      document.getElementById('userProfileSection').classList.remove('hidden');
+      document.getElementById('userProfileSection')?.classList.remove('hidden');
     }
   } catch (error) {
     console.error("❌ Error loading profile:", error);
@@ -40,25 +42,18 @@ export async function loadUserProfile(provider, signer, userAddress) {
 // 🔹 Kullanıcı profili oluştur / güncelle
 export async function setupUserProfile(provider, signer, userAddress) {
   try {
-    const contract = getContract(provider);
-    const userProfile = await contract.getUserProfile(userAddress);
-    const username = document.getElementById("userUsername").value.trim();
+    const contract = getContract(signer);
+    const username = document.getElementById("userUsername")?.value.trim();
 
     if (!username) {
       alert("Please enter a username first!");
       return;
     }
 
-    let tx;
-    if (userProfile.isActive) {
-      tx = await contract.connect(signer).updateProfile(username, { gasLimit: 300000 });
-      alert("🔄 Updating profile...");
-    } else {
-      tx = await contract.connect(signer).registerUser(username, { gasLimit: 500000 });
-      alert("🚀 Registering new profile...");
-    }
-
+    const tx = await contract.connect(signer).registerUser(username, { gasLimit: 500000 });
+    alert("🚀 Registering new profile...");
     await tx.wait();
+
     alert("✅ Profile setup complete!");
     loadUserProfile(provider, signer, userAddress);
   } catch (error) {
@@ -70,8 +65,8 @@ export async function setupUserProfile(provider, signer, userAddress) {
 // 🔹 Proposal oluştur
 export async function createProposal(provider, signer) {
   try {
-    const title = document.getElementById("proposalTitle").value.trim();
-    const description = document.getElementById("proposalDescription").value.trim();
+    const title = document.getElementById("proposalTitle")?.value.trim();
+    const description = document.getElementById("proposalDescription")?.value.trim();
 
     if (!title || !description) {
       alert("Please enter both title and description");
@@ -80,9 +75,10 @@ export async function createProposal(provider, signer) {
 
     const contract = getContract(signer);
     const duration = 3 * 24 * 60 * 60; // 3 gün
-    const tx = await contract.createProposal(title, description, duration, { gasLimit: 600000 });
 
+    const tx = await contract.createProposal(title, description, duration, { gasLimit: 600000 });
     console.log("🔄 Proposal TX sent:", tx.hash);
+
     await tx.wait();
     alert("✅ Proposal created successfully!");
     loadProposals(provider);
@@ -98,6 +94,7 @@ export async function voteProposal(provider, signer, proposalId, support) {
     const contract = getContract(signer);
     const tx = await contract.voteProposal(proposalId, support, { gasLimit: 400000 });
     await tx.wait();
+
     alert("✅ Vote submitted successfully!");
     loadProposals(provider);
   } catch (error) {
@@ -111,72 +108,59 @@ export async function loadProposals(provider) {
   try {
     const contract = getContract(provider);
     const activeProposals = await contract.getActiveProposals();
-    const container = document.getElementById('proposalsContainer');
-    container.innerHTML = '';
+    const container = document.getElementById("proposalsContainer");
 
-    if (activeProposals.length === 0) {
-      container.innerHTML = '<p>No active proposals yet.</p>';
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (!activeProposals.length) {
+      container.innerHTML = `<p>No active proposals yet.</p>`;
       return;
     }
 
-    for (let i = 0; i < activeProposals.length; i++) {
-      const proposalId = activeProposals[i];
-      const details = await contract.getProposalDetails(proposalId);
-
-      const card = document.createElement('div');
-      card.className = 'proposal-card';
+    activeProposals.forEach((p, index) => {
+      const card = document.createElement("div");
+      card.classList.add("link-card");
       card.innerHTML = `
-        <h4>${details.title}</h4>
-        <p>${details.description}</p>
-        <div class="link-stats">
-          <div class="stat-item"><div>👍 For</div><div class="stat-value">${details.votesFor.toString()}</div></div>
-          <div class="stat-item"><div>👎 Against</div><div class="stat-value">${details.votesAgainst.toString()}</div></div>
+        <h4>${p.title}</h4>
+        <p>${p.description}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span>🗳️ For: ${p.votesFor.toString()}</span>
+          <span>❌ Against: ${p.votesAgainst.toString()}</span>
         </div>
-        <button onclick="voteProposal(${proposalId}, true)">👍 Support</button>
-        <button onclick="voteProposal(${proposalId}, false)">👎 Oppose</button>`;
+        <div style="margin-top:10px;display:flex;gap:10px;">
+          <button onclick="voteProposal(window.provider, window.signer, ${index}, true)">👍 Support</button>
+          <button onclick="voteProposal(window.provider, window.signer, ${index}, false)">👎 Oppose</button>
+        </div>
+      `;
       container.appendChild(card);
-    }
+    });
   } catch (error) {
     console.error("❌ Error loading proposals:", error);
   }
 }
 
-// 🔹 Kullanıcı rozetlerini yükle
+// 🔹 Kullanıcı badge'lerini yükle (isteğe bağlı)
 export async function loadUserBadges(provider, userAddress) {
   try {
     const contract = getContract(provider);
     const badges = await contract.getUserBadges(userAddress);
-    const container = document.getElementById('userBadgesContainer');
-    container.innerHTML = '';
+    const container = document.getElementById("badgesContainer");
+    if (!container) return;
 
-    if (badges.length === 0) {
-      container.innerHTML = '<p>No badges yet. Be active to earn badges!</p>';
+    container.innerHTML = "";
+    if (!badges.length) {
+      container.innerHTML = `<p>No badges earned yet.</p>`;
       return;
     }
 
-    badges.forEach(badge => {
-      const badgeCard = document.createElement('div');
-      badgeCard.className = 'badge-card';
-      badgeCard.innerHTML = `<strong>${badge}</strong><p>Earned through community participation</p>`;
-      container.appendChild(badgeCard);
+    badges.forEach(b => {
+      const div = document.createElement("div");
+      div.classList.add("link-card");
+      div.innerHTML = `<p>🏅 ${b}</p>`;
+      container.appendChild(div);
     });
   } catch (error) {
     console.error("❌ Error loading badges:", error);
-  }
-}
-// 🔹 Support link gönderimi
-export async function submitSupportLink(provider, signer, linkUrl) {
-  try {
-    const contract = getContract(signer);
-    const tx = await contract.addSupportLink(linkUrl, { gasLimit: 500000 });
-    console.log("🔄 Transaction sent:", tx.hash);
-    alert("🦊 MetaMask opened. Please confirm the transaction...");
-    await tx.wait();
-    alert("✅ Link successfully submitted to blockchain!");
-    return true;
-  } catch (error) {
-    console.error("❌ submitSupportLink error:", error);
-    alert("Transaction failed. Please check the console for details.");
-    return false;
   }
 }
