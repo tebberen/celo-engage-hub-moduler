@@ -236,3 +236,18 @@ document.getElementById("proposalsContainer")?.addEventListener("click", async (
     alert("Vote failed: " + e2.message);
   }
 });
+export function displayGovernanceProposals(proposals) {
+  const container = document.getElementById("proposalsContainer");
+  if (!container) return;
+  container.innerHTML = "";
+  proposals.forEach((p) => {
+    const card = document.createElement("div");
+    card.className = "proposal-card";
+    card.innerHTML = `
+      <h3>${p.title}</h3>
+      <p>${p.description}</p>
+      <button onclick="voteForProposal('${p.id}')">Vote ✅</button>
+    `;
+    container.appendChild(card);
+  });
+}
