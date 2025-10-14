@@ -1,15 +1,15 @@
-// app.js (güncel)
 import './src/styles/main.css';
 import { displaySupportLinks } from './main.js';
 import { connectWalletMetaMask, disconnectWallet, checkCurrentNetwork } from './src/services/walletService.js';
 import { loadUserProfile } from './src/services/contractService.js';
 import { initGovernance } from './src/services/governanceService.js';
+import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
 
 async function initApp() {
   console.log("🚀 Celo Engage Hub initializing...");
   displaySupportLinks();
 
-  // 🔹 Governance butonu
+  // 🏛️ Governance butonu
   const governanceBtn = document.getElementById("governanceButton");
   if (governanceBtn) {
     governanceBtn.addEventListener("click", () => {
@@ -19,9 +19,9 @@ async function initApp() {
     });
   }
 
-  // 🔹 MetaMask değişiklikleri
+  // 🔗 Wallet bağlantısı ve değişiklik olayları
   if (window.ethereum) {
-    window.ethereum.on('chainChanged', async (chainId) => {
+    window.ethereum.on('chainChanged', async () => {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await checkCurrentNetwork(provider);
     });
