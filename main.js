@@ -1,14 +1,16 @@
-// ✅ Doğru import yolları (kök dizin)
-import { CONTRACT_ADDRESS, CONTRACT_ABI, CELO_MAINNET_PARAMS, CELO_ALFAJORES_PARAMS } from "./constants.js";
-import { connectWalletMetaMask, disconnectWallet, checkCurrentNetwork } from "./walletService.js";
-import { loadUserProfile, createProposal, voteProposal, loadProposals, loadUserBadges } from "./contractService.js";
+import { CONTRACT_ADDRESS, CONTRACT_ABI, CELO_MAINNET_PARAMS, CELO_ALFAJORES_PARAMS } from "./src/utils/constants.js";
+import { connectWalletMetaMask, disconnectWallet, checkCurrentNetwork } from "./src/services/walletService.js";
+import { loadUserProfile } from "./src/services/contractService.js";
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
+
+// 🟢 Yeni eklendi: Governance servisleri
+import { fetchActiveProposals, createProposal, voteProposal } from "./src/services/governanceService.js";
 
 let provider = null;
 let signer = null;
 let userAddress = "";
 let allCommunityLinks = [];
-let proposals = [];
+let governanceInitialized = false; // 🟢 Yeni eklendi
 
 // ✅ Başlangıç linkleri
 const initialSupportLinks = [
@@ -23,7 +25,7 @@ const initialSupportLinks = [
   "https://github.com/tebberen"
 ];
 
-// ✅ Local Storage
+// ✅ Local storage
 function loadLinksFromStorage() {
   const stored = localStorage.getItem("celoEngageHubLinks");
   if (stored) return JSON.parse(stored);
@@ -37,16 +39,6 @@ function loadLinksFromStorage() {
 
 function saveLinksToStorage(links) {
   localStorage.setItem("celoEngageHubLinks", JSON.stringify(links));
-}
-
-function loadProposalsFromStorage() {
-  const stored = localStorage.getItem("celoGovernanceProposals");
-  if (stored) return JSON.parse(stored);
-  return [];
-}
-
-function saveProposalsToStorage() {
-  localStorage.setItem("celoGovernanceProposals", JSON.stringify(proposals));
 }
 
 // ✅ Platform ismi
@@ -68,7 +60,10 @@ function displaySupportLinks() {
   const activeLinks = allCommunityLinks.filter(l => l.clickCount < 5);
 
   if (activeLinks.length === 0) {
-    container.innerHTML = `<div class="link-card"><p>🌟 All links reached max support! Submit new ones.</p></div>`;
+    container.innerHTML = `
+      <div class="link-card">
+        <p>🌟 All links have reached maximum support! Submit new links to continue.</p>
+      </div>`;
     return;
   }
 
@@ -94,191 +89,73 @@ function displaySupportLinks() {
   });
 }
 
-// ✅ Governance listesi
-function displayProposals() {
-  const container = document.getElementById("proposalsContainer");
-  if (!container) return;
-  container.innerHTML = "";
-
-  if (proposals.length === 0) {
-    container.innerHTML = `<p>No proposals yet. Be the first to create one!</p>`;
-    return;
-  }
-
-  proposals.forEach((p, index) => {
-    const card = document.createElement("div");
-    card.classList.add("link-card");
-    card.innerHTML = `
-      <h4>${p.title}</h4>
-      <p>${p.description}</p>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span>🗳️ Votes: ${p.votes}</span>
-        <button onclick="voteProposal(window.provider, window.signer, ${index}, true)" class="vote-btn">Vote ✅</button>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-// ✅ Link tıklama
+// ✅ Tıklama işlemi
 window.handleCommunityLink = function (url, event) {
   if (event) event.stopPropagation();
+
   const formSection = document.getElementById("newLinkFormSection");
   if (formSection) {
     formSection.classList.remove("hidden");
     formSection.style.display = "block";
     formSection.scrollIntoView({ behavior: "smooth" });
   }
+
   try {
     let links = JSON.parse(localStorage.getItem("celoEngageHubLinks")) || [];
     const index = links.findIndex(l => l.link === url);
     if (index !== -1) {
-      links[index].clickCount = (links[index].clickCount || 0) + 1;
-      localStorage.setItem("celoEngageHubLinks", JSON.stringify(links));
+      links[index].clickCount++;
+      saveLinksToStorage(links);
+      displaySupportLinks();
     }
-  } catch (_) {}
-};
-
-// ✅ Vote Proposal
-window.voteProposal = async function (provider, signer, index, support) {
-  if (!signer) return alert("Please connect your wallet first!");
-  try {
-    const tx = await signer.sendTransaction({
-      to: userAddress,
-      value: 0,
-      gasLimit: 100000
-    });
-    await tx.wait();
-
-    proposals[index].votes += 1;
-    saveProposalsToStorage();
-    displayProposals();
-
-    alert("✅ Vote recorded successfully on-chain!");
-  } catch (err) {
-    console.error("❌ Vote failed:", err);
-    alert("Transaction failed or cancelled.");
+  } catch (error) {
+    console.error("Error updating link:", error);
   }
 };
 
-// ✅ Create Proposal
-window.createProposal = async function () {
-  if (!signer) return alert("Please connect your wallet first!");
-
-  const title = document.getElementById("proposalTitle").value.trim();
-  const desc = document.getElementById("proposalDescription").value.trim();
-  if (!title || !desc) return alert("Please fill in both title and description.");
-
-  try {
-    const tx = await signer.sendTransaction({
-      to: userAddress,
-      value: 0,
-      gasLimit: 120000
-    });
-    await tx.wait();
-
-    proposals.push({ title, description: desc, votes: 0, creator: userAddress });
-    saveProposalsToStorage();
-    displayProposals();
-
-    document.getElementById("proposalTitle").value = "";
-    document.getElementById("proposalDescription").value = "";
-    alert("✅ Proposal created and confirmed on-chain!");
-  } catch (err) {
-    console.error("❌ Proposal failed:", err);
-    alert("Transaction failed or cancelled.");
-  }
-};
-
-// ✅ Sayfa yüklenince
+// ✅ Uygulama başlat
 window.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Celo Engage Hub initializing...");
+
   allCommunityLinks = loadLinksFromStorage();
-  proposals = loadProposalsFromStorage();
   displaySupportLinks();
 
+  // 🟡 Wallet bağlantısı
   const connectBtn = document.getElementById("connectWalletBtn");
-  const disconnectBtn = document.getElementById("disconnectWalletBtn");
-  const submitBtn = document.getElementById("submitLinkBtn");
-  const input = document.getElementById("userLinkInput");
-  const govBtn = document.getElementById("governanceButton");
-
-  // 🔹 Governance görünürlük
-  if (govBtn) {
-    govBtn.addEventListener("click", () => {
-      document.getElementById("linksContainer").style.display = "none";
-      document.getElementById("newLinkFormSection").style.display = "none";
-      document.getElementById("governanceSection").classList.remove("hidden");
-      displayProposals();
-    });
-  }
-
-  // 🔹 MetaMask bağlantısı
   if (connectBtn) {
     connectBtn.addEventListener("click", async () => {
-      try {
-        console.log("⏳ Connecting to MetaMask...");
-        const result = await connectWalletMetaMask();
-        if (result.connected) {
-          provider = result._provider;
-          signer = result._signer;
-          userAddress = result._address;
-          await checkCurrentNetwork(provider);
-          await loadUserProfile(provider, signer, userAddress);
-          console.log("✅ Wallet connected:", userAddress);
-        } else {
-          alert("⚠️ Wallet connection failed.");
+      const result = await connectWalletMetaMask();
+      if (result.connected) {
+        provider = result._provider;
+        signer = result._signer;
+        userAddress = result._address;
+      }
+    });
+  }
+
+  // 🟡 Governance butonu
+  const governanceBtn = document.getElementById("governanceButton");
+  if (governanceBtn) {
+    governanceBtn.addEventListener("click", async () => {
+      const section = document.getElementById("governanceSection");
+      if (section) section.classList.remove("hidden");
+
+      if (!provider && window.ethereum) {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+      }
+
+      if (!governanceInitialized) {
+        console.log("🗳️ Loading proposals...");
+        try {
+          const list = await fetchActiveProposals(provider);
+          console.log("Active Proposals:", list);
+        } catch (err) {
+          console.error("Error fetching proposals:", err);
         }
-      } catch (err) {
-        console.error("❌ MetaMask connect error:", err);
-        alert("MetaMask not responding. Please check your wallet.");
+        governanceInitialized = true;
       }
     });
   }
 
-  // 🔹 Wallet bağlantısını kes
-  if (disconnectBtn) {
-    disconnectBtn.addEventListener("click", () => {
-      disconnectWallet();
-      provider = null;
-      signer = null;
-      userAddress = "";
-    });
-  }
-
-  // 🔹 Link gönderme (gas-only)
-  if (submitBtn) {
-    submitBtn.addEventListener("click", async () => {
-      const newLink = input.value.trim();
-      if (!newLink) return alert("Please enter a valid link!");
-      if (!signer) return alert("Please connect your wallet first!");
-
-      try {
-        const tx = await signer.sendTransaction({
-          to: userAddress,
-          value: 0,
-          gasLimit: 100000
-        });
-        await tx.wait();
-
-        allCommunityLinks.push({
-          link: newLink,
-          clickCount: 0,
-          timestamp: Date.now(),
-          submitter: userAddress
-        });
-
-        saveLinksToStorage(allCommunityLinks);
-        displaySupportLinks();
-        input.value = "";
-        document.getElementById("newLinkFormSection").classList.add("hidden");
-        alert("✅ Transaction confirmed! Link added successfully.");
-      } catch (err) {
-        console.error("❌ Transaction failed:", err);
-        alert("Transaction failed or rejected.");
-      }
-    });
-  }
-
-  console.log("✅ Celo Engage Hub ready!");
+  console.log("✅ Celo Engage Hub loaded successfully!");
 });
