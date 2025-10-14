@@ -1,3 +1,4 @@
+import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../utils/constants.js";
 
 // Kontrat nesnesi oluştur
