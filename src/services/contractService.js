@@ -1,166 +1,147 @@
-// ✅ Ethers import (çok önemli!)
+// ✅ Ethers import (kök dizin için doğru)
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from "../utils/constants.js";
+// ✅ Constants kök dizinde
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants.js";
 
-// 🔹 Kontrat nesnesi oluştur
+/** ----------------------------------------------------------------
+ *  Helpers
+ *  ---------------------------------------------------------------*/
 function getContract(providerOrSigner) {
+  // providerOrSigner: provider (read) veya signer (write)
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, providerOrSigner);
 }
 
-// 🔹 Kullanıcı profilini yükle
+/** ----------------------------------------------------------------
+ *  Profile
+ *  ---------------------------------------------------------------*/
 export async function loadUserProfile(provider, signer, userAddress) {
   try {
     const contract = getContract(provider);
-    const profile = await contract.getUserProfile(userAddress);
+    // Kontratında isim farklı olabilir; yoksa bu çağrı try/catch’te sessiz düşer
+    const p = await contract.getUserProfile(userAddress);
 
     const userProfile = {
-      username: profile[0],
-      supportCount: profile[1].toString(),
-      reputation: profile[2].toString(),
-      badgeCount: profile[3].toString(),
-      isActive: profile[4],
-      timestamp: profile[5].toString()
+      username: p[0],
+      supportCount: p[1]?.toString?.() ?? "0",
+      reputation: p[2]?.toString?.() ?? "0",
+      badgeCount: p[3]?.toString?.() ?? "0",
+      isActive: !!p[4],
+      timestamp: p[5]?.toString?.() ?? "0"
     };
 
     console.log("✅ User profile loaded:", userProfile);
 
-    // UI güncellemesi
-    if (userProfile.isActive) {
-      document.getElementById('userProfileSection')?.classList.add('hidden');
-      document.getElementById('governanceSection')?.classList.remove('hidden');
-      document.getElementById('badgesSection')?.classList.remove('hidden');
-      loadUserBadges(provider, userAddress);
-      loadProposals(provider);
-    } else {
-      document.getElementById('userProfileSection')?.classList.remove('hidden');
-    }
-  } catch (error) {
-    console.error("❌ Error loading profile:", error);
+    // Basit UI örneği (eleman yoksa sorun çıkarmaz)
+    document.getElementById("walletInfo")?.classList.remove("hidden");
+  } catch (err) {
+    // Buraya düşüyorsa kontratta getUserProfile olmayabilir; sorun değil, app çalışmaya devam eder
+    console.warn("⚠️ Profile read skipped (contract view may not exist):", err?.message || err);
   }
 }
 
-// 🔹 Kullanıcı profili oluştur / güncelle
-export async function setupUserProfile(provider, signer, userAddress) {
+/** ----------------------------------------------------------------
+ *  Proposals (opsiyonel – kontratında karşılığı yoksa try/catch yakalar)
+ *  ---------------------------------------------------------------*/
+export async function loadProposals(provider) {
   try {
-    const contract = getContract(signer);
-    const username = document.getElementById("userUsername")?.value.trim();
+    const contract = getContract(provider);
+    const list = await contract.getActiveProposals?.();
+    const container = document.getElementById("proposalsContainer");
+    if (!container) return;
 
-    if (!username) {
-      alert("Please enter a username first!");
+    container.innerHTML = "";
+
+    if (!list || list.length === 0) {
+      container.innerHTML = `<p>No active proposals yet.</p>`;
       return;
     }
 
-    const tx = await contract.connect(signer).registerUser(username, { gasLimit: 500000 });
-    alert("🚀 Registering new profile...");
-    await tx.wait();
+    list.forEach((p, idx) => {
+      const card = document.createElement("div");
+      card.classList.add("link-card");
+      const forVotes = p.votesFor?.toString?.() ?? "0";
+      const againstVotes = p.votesAgainst?.toString?.() ?? "0";
 
-    alert("✅ Profile setup complete!");
-    loadUserProfile(provider, signer, userAddress);
-  } catch (error) {
-    console.error("❌ Profile setup error:", error);
-    alert("Profile setup failed. Check console for details.");
+      card.innerHTML = `
+        <h4>${p.title ?? "Untitled"}</h4>
+        <p>${p.description ?? ""}</p>
+        <div style="display:flex;justify-content:space-between;margin:8px 0;">
+          <span>🗳️ For: ${forVotes}</span>
+          <span>❌ Against: ${againstVotes}</span>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="window.voteProposal(${idx}, true)">👍 Support</button>
+          <button onclick="window.voteProposal(${idx}, false)">👎 Oppose</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.warn("⚠️ loadProposals skipped (method may not exist):", err?.message || err);
   }
 }
 
-// 🔹 Proposal oluştur
 export async function createProposal(provider, signer) {
   try {
     const title = document.getElementById("proposalTitle")?.value.trim();
     const description = document.getElementById("proposalDescription")?.value.trim();
-
     if (!title || !description) {
-      alert("Please enter both title and description");
+      alert("Please fill in title and description.");
       return;
     }
 
     const contract = getContract(signer);
     const duration = 3 * 24 * 60 * 60; // 3 gün
-
-    const tx = await contract.createProposal(title, description, duration, { gasLimit: 600000 });
-    console.log("🔄 Proposal TX sent:", tx.hash);
-
+    const tx = await contract.createProposal?.(title, description, duration, { gasLimit: 600000 });
+    if (!tx) throw new Error("createProposal not found on contract");
     await tx.wait();
-    alert("✅ Proposal created successfully!");
-    loadProposals(provider);
-  } catch (error) {
-    console.error("❌ Proposal creation error:", error);
+
+    alert("✅ Proposal created!");
+    await loadProposals(provider);
+  } catch (err) {
+    console.error("❌ Proposal creation error:", err);
     alert("Failed to create proposal.");
   }
 }
 
-// 🔹 Oy verme
 export async function voteProposal(provider, signer, proposalId, support) {
   try {
     const contract = getContract(signer);
-    const tx = await contract.voteProposal(proposalId, support, { gasLimit: 400000 });
+    const tx = await contract.voteProposal?.(proposalId, !!support, { gasLimit: 400000 });
+    if (!tx) throw new Error("voteProposal not found on contract");
     await tx.wait();
 
-    alert("✅ Vote submitted successfully!");
-    loadProposals(provider);
-  } catch (error) {
-    console.error("❌ Voting error:", error);
+    alert("✅ Vote submitted!");
+    await loadProposals(provider);
+  } catch (err) {
+    console.error("❌ Voting error:", err);
     alert("Voting failed.");
   }
 }
 
-// 🔹 Aktif Proposal'ları yükle
-export async function loadProposals(provider) {
-  try {
-    const contract = getContract(provider);
-    const activeProposals = await contract.getActiveProposals();
-    const container = document.getElementById("proposalsContainer");
-
-    if (!container) return;
-    container.innerHTML = "";
-
-    if (!activeProposals.length) {
-      container.innerHTML = `<p>No active proposals yet.</p>`;
-      return;
-    }
-
-    activeProposals.forEach((p, index) => {
-      const card = document.createElement("div");
-      card.classList.add("link-card");
-      card.innerHTML = `
-        <h4>${p.title}</h4>
-        <p>${p.description}</p>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span>🗳️ For: ${p.votesFor.toString()}</span>
-          <span>❌ Against: ${p.votesAgainst.toString()}</span>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:10px;">
-          <button onclick="voteProposal(window.provider, window.signer, ${index}, true)">👍 Support</button>
-          <button onclick="voteProposal(window.provider, window.signer, ${index}, false)">👎 Oppose</button>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-  } catch (error) {
-    console.error("❌ Error loading proposals:", error);
-  }
-}
-
-// 🔹 Kullanıcı badge'lerini yükle (isteğe bağlı)
+/** ----------------------------------------------------------------
+ *  Badges (opsiyonel)
+ *  ---------------------------------------------------------------*/
 export async function loadUserBadges(provider, userAddress) {
   try {
     const contract = getContract(provider);
-    const badges = await contract.getUserBadges(userAddress);
+    const badges = await contract.getUserBadges?.(userAddress);
     const container = document.getElementById("badgesContainer");
     if (!container) return;
 
     container.innerHTML = "";
-    if (!badges.length) {
-      container.innerHTML = `<p>No badges earned yet.</p>`;
+    if (!badges || badges.length === 0) {
+      container.innerHTML = `<p>No badges yet.</p>`;
       return;
     }
 
-    badges.forEach(b => {
+    badges.forEach((b) => {
       const div = document.createElement("div");
       div.classList.add("link-card");
       div.innerHTML = `<p>🏅 ${b}</p>`;
       container.appendChild(div);
     });
-  } catch (error) {
-    console.error("❌ Error loading badges:", error);
+  } catch (err) {
+    console.warn("⚠️ loadUserBadges skipped (method may not exist):", err?.message || err);
   }
 }
